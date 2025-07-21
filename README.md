@@ -5,8 +5,8 @@
 ## Version 2 of the DX_FT8 Firmware is the result of 12 months of user collaboration which offers a great FT8 Experience. 
 
 ### The DX_FT8 Transciver Project was introduced in September 2024 by Barb WB2CBA and Charley W5BAA and is based on the STM32F746 Disco Board
-### From the start, this project was Open Source for both the hardware and software. By making it Open Source the operation of the transceiver and its usefullness has been greatly improved.
-### To date, the firmware has undergone 13 Revisions. The present the firmware is by and away a great improvement over out initial offering; thus we are establishing a Version 2.0 of the firmware.
+### From the start, this project was Open Source for both the hardware and software. By making it Open Source the operation of the transceiver and its usefullness have been greatly improved.
+### To date, the firmware has undergone 13 Revisions. The present the firmware is by far and away a great improvement over our initial offering; thus we are establishing a Version 2.0 of the firmware.
 ###
 ## Contibutors to the firmware include:
 ### - Our Users, who politely pointed out how FT8 really works.
