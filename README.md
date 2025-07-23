@@ -12,7 +12,7 @@
 ### - Our Users, who politely pointed out how FT8 really works.
 ### - Paul, g8kig, who patiently hosted the firmware on GitHub and made a number of very important improvements which allowed further development of the firmware.
 ### - Wei, AG6AQ, who added SOTA, POTA, Free Text and Keyboard Data Entry.
-### - Zhenxing, N6NAN, who rewrote the FT8 Traffic Management code to provide a comprehensive FT8 State Machine.
+### - Zhenxing, N6HAN, who rewrote the FT8 Traffic Management code to provide a comprehensive FT8 State Machine.
 ##
 ## Links to Important Related Websites:
 ### - Barb's DX_FT8 Project: https://github.com/WB2CBA/DX-FT8-FT8-MULTIBAND-TABLET-TRANSCEIVER
