@@ -79,7 +79,6 @@ static bool worked_qsos_in_display = false;
 // Used for display RX and TX after returning from Tune
 static bool tune_pressed = false;
 
-
 #ifndef HOST_HAL_MOCK
 /* Private function prototypes -----------------------------------------------*/
 static void SystemClock_Config(void);
@@ -91,12 +90,16 @@ static void HID_InitApplication(void);
 // Helper function for updating TX region display
 void tx_display_update()
 {
-	if (Tune_On || worked_qsos_in_display) {
+	if (Tune_On || worked_qsos_in_display)
+	{
 		return;
 	}
-	if (xmit_flag) {
+	if (xmit_flag)
+	{
 		display_txing_message(autoseq_txbuf);
-	} else {
+	}
+	else
+	{
 		display_queued_message(autoseq_txbuf);
 	}
 	autoseq_get_qso_states(autoseq_state_strs);
@@ -118,7 +121,8 @@ static void update_synchronization(void)
 		printf("slot state %d -> %d\n", slot_state, slot_state ^ 1);
 #endif
 		slot_state ^= 1;
-		if (was_txing) {
+		if (was_txing)
+		{
 			autoseq_tick();
 		}
 		was_txing = 0;
@@ -144,9 +148,11 @@ static void update_synchronization(void)
 		make_Real_Date();
 		// Log the ctx queue
 		autoseq_log_ctx_queue(autoseq_queue_strs);
-		for (int i = 0; i < MAX_QUEUE_SIZE; i++) {
+		for (int i = 0; i < MAX_QUEUE_SIZE; i++)
+		{
 			const char *cur_line = autoseq_queue_strs[i];
-			if (cur_line[0] == '\0') {
+			if (cur_line[0] == '\0')
+			{
 				break;
 			}
 			Write_RxTxLog_Data(cur_line);
@@ -214,14 +220,15 @@ int main(void)
 	FT8_Sync();
 	HAL_Delay(10);
 #else
-int main(int argc, char *argv[]) {
-	if (argc == 2) {
+int main(int argc, char *argv[])
+{
+	if (argc == 2)
+	{
 		test_data_file = argv[1];
 	}
 #endif
 
 	autoseq_init();
-
 
 	while (1)
 	{
@@ -263,7 +270,8 @@ int main(int argc, char *argv[]) {
 			display_RealTime(100, 240);
 
 			// falling edge detection - tune mode exited
-			if (!Tune_On && tune_pressed) {
+			if (!Tune_On && tune_pressed)
+			{
 				// Need to display RX and TX again
 				display_messages(new_decoded, master_decoded);
 				tx_display_update();
@@ -271,7 +279,6 @@ int main(int argc, char *argv[]) {
 			tune_pressed = Tune_On;
 
 			DSP_Flag = 0;
-
 		}
 
 		if (decode_flag && !xmit_flag)
@@ -279,7 +286,8 @@ int main(int argc, char *argv[]) {
 			master_decoded = ft8_decode();
 #ifdef HOST_HAL_MOCK
 			// Check if we should exit the main
-			if (master_decoded == -1) {
+			if (master_decoded == -1)
+			{
 				return 0;
 			}
 #endif
@@ -290,10 +298,11 @@ int main(int argc, char *argv[]) {
 			// Write all the decoded messages to RxTxLog
 			make_Real_Time();
 			make_Real_Date();
-			for (int i = 0; i < master_decoded; ++i) {
+			for (int i = 0; i < master_decoded; ++i)
+			{
 				char log_str[64];
 				snprintf(log_str, sizeof(log_str), "%c [%s %s][%s] %s %s %s %2i %d",
-				         was_txing ? 'O' : 'R',
+						 was_txing ? 'O' : 'R',
 						 log_rtc_date_string,
 						 log_rtc_time_string,
 						 sBand_Data[BandIndex].display,
@@ -304,13 +313,16 @@ int main(int argc, char *argv[]) {
 						 new_decoded[i].freq_hz);
 				Write_RxTxLog_Data(log_str);
 			}
-			if (!was_txing) {
+			if (!was_txing)
+			{
 				autoseq_on_decodes(new_decoded, master_decoded);
 				if (autoseq_get_next_tx(autoseq_txbuf))
 				{
 					queue_custom_text(autoseq_txbuf);
 					QSO_xmit = 1;
-				} else if (Beacon_On)  {
+				}
+				else if (Beacon_On)
+				{
 					autoseq_start_cq();
 					autoseq_get_next_tx(autoseq_txbuf);
 					queue_custom_text(autoseq_txbuf);
@@ -319,7 +331,7 @@ int main(int argc, char *argv[]) {
 				}
 				tx_display_update();
 			}
-			
+
 			decode_flag = 0;
 		} // end of servicing FT_Decode
 
@@ -328,7 +340,8 @@ int main(int argc, char *argv[]) {
 
 		Process_Touch();
 
-		if (clr_pressed) {
+		if (clr_pressed)
+		{
 			terminate_QSO();
 			QSO_xmit = 0;
 			was_txing = 0;
@@ -338,16 +351,19 @@ int main(int argc, char *argv[]) {
 			clr_pressed = false;
 		}
 
-		if (tx_pressed) {
+		if (tx_pressed)
+		{
 			worked_qsos_in_display = display_worked_qsos();
 			tx_pressed = false;
 			tx_display_update();
 		}
 
-		if (!Tune_On && FT8_Touch_Flag && FT_8_TouchIndex < master_decoded) {
+		if (!Tune_On && FT8_Touch_Flag && FT_8_TouchIndex < master_decoded)
+		{
 			process_selected_Station(master_decoded, FT_8_TouchIndex);
 			autoseq_on_touch(&new_decoded[FT_8_TouchIndex]);
-			if (autoseq_get_next_tx(autoseq_txbuf)) {
+			if (autoseq_get_next_tx(autoseq_txbuf))
+			{
 				queue_custom_text(autoseq_txbuf);
 				QSO_xmit = 1;
 			}

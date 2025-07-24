@@ -38,9 +38,9 @@
 #include "button.h"
 #include "ini.h"
 
-char Station_Call[CALLSIGN_SIZE];	// seven character call sign (e.g. 3DA0XYZ) + optional /P + null terminator
-char Locator[LOCATOR_SIZE];		// four character locator + null terminator
-char Target_Call[CALLSIGN_SIZE];	// seven character call sign (e.g. 3DA0XYZ) + optional /P + null terminator
+char Station_Call[CALLSIGN_SIZE];  // seven character call sign (e.g. 3DA0XYZ) + optional /P + null terminator
+char Locator[LOCATOR_SIZE];		   // four character locator + null terminator
+char Target_Call[CALLSIGN_SIZE];   // seven character call sign (e.g. 3DA0XYZ) + optional /P + null terminator
 char Target_Locator[LOCATOR_SIZE]; // four character locator  + null terminator
 int Station_RSL;
 
@@ -49,11 +49,11 @@ static uint8_t isInitialized = 0;
 /* Fatfs structure */
 static FATFS FS;
 static FIL fil2;
-static const char *ini_file_name  = "StationData.ini";
+static const char *ini_file_name = "StationData.ini";
 
 char Free_Text1[MESSAGE_SIZE];
 char Free_Text2[MESSAGE_SIZE];
-char Comment[MESSAGE_SIZE]={'\0'};
+char Comment[MESSAGE_SIZE] = {'\0'};
 
 void update_stationdata(void);
 
@@ -166,19 +166,19 @@ void Read_Station_File(void)
 		{
 			ini_data_t ini_data;
 			parse_ini(read_buffer, bytes_read, &ini_data);
-				const ini_section_t *section = get_ini_section(&ini_data, "Station");
+			const ini_section_t *section = get_ini_section(&ini_data, "Station");
 			if (section != NULL)
 			{
 				setup_station_call(get_ini_value_from_section(section, "Call"));
 				setup_locator(get_ini_value_from_section(section, "Locator"));
 			}
-				section = get_ini_section(&ini_data, "FreeText");
+			section = get_ini_section(&ini_data, "FreeText");
 			if (section != NULL)
 			{
 				setup_free_text(get_ini_value_from_section(section, "1"), FreeText1);
 				setup_free_text(get_ini_value_from_section(section, "2"), FreeText2);
 			}
-				section = get_ini_section(&ini_data, "BandData");
+			section = get_ini_section(&ini_data, "BandData");
 			if (section != NULL)
 			{
 				// see BandIndex
@@ -187,7 +187,7 @@ void Read_Station_File(void)
 				{
 					const char *band_data = get_ini_value_from_section(section, bands[idx]);
 					if (band_data != NULL)
-						{
+					{
 						size_t band_data_size = strlen(band_data) + 1;
 						if (band_data_size < BAND_DATA_SIZE)
 						{
@@ -197,16 +197,17 @@ void Read_Station_File(void)
 					}
 				}
 			}
-				section = get_ini_section(&ini_data, "MISC");
+			section = get_ini_section(&ini_data, "MISC");
 			if (section != NULL)
 			{
-				strcpy(Comment,(get_ini_value_from_section(section, "COMMENT")));
+				strcpy(Comment, (get_ini_value_from_section(section, "COMMENT")));
 			}
 
-		f_close(&fil2);
+			f_close(&fil2);
 		}
 	}
-	else{
+	else
+	{
 		FRESULT fres = f_open(&fil2, ini_file_name, FA_OPEN_ALWAYS | FA_WRITE);
 		if (fres == FR_OK)
 		{
@@ -282,13 +283,14 @@ void queue_custom_text(const char *tx_msg)
 	genft8(packed, tones);
 }
 
-void update_stationdata(void){
+void update_stationdata(void)
+{
 	char write_buffer[64];
 	const char *bands[NumBands] = {"40", "30", "20", "17", "15", "12", "10"};
 
 	FRESULT fres = f_mount(&FS, SDPath, 1);
-	if(fres == FR_OK)
-	    fres = f_open(&fil2, ini_file_name, FA_CREATE_ALWAYS | FA_WRITE);
+	if (fres == FR_OK)
+		fres = f_open(&fil2, ini_file_name, FA_CREATE_ALWAYS | FA_WRITE);
 	if (fres == FR_OK)
 	{
 		fres = f_lseek(&fil2, 0);
@@ -303,8 +305,9 @@ void update_stationdata(void){
 			sprintf(write_buffer, "2=%s\n", Free_Text2);
 			f_puts(write_buffer, &fil2);
 			f_puts("[BandData]\n", &fil2);
-			for (int idx = _40M; idx <= _10M; ++idx){
-				sprintf(write_buffer, "%s=%u.%03u\n", bands[idx], sBand_Data[idx].Frequency / 1000, sBand_Data[idx].Frequency % 1000 );
+			for (int idx = _40M; idx <= _10M; ++idx)
+			{
+				sprintf(write_buffer, "%s=%u.%03u\n", bands[idx], sBand_Data[idx].Frequency / 1000, sBand_Data[idx].Frequency % 1000);
 				f_puts(write_buffer, &fil2);
 			}
 			f_puts("[MISC]\n", &fil2);
@@ -314,4 +317,3 @@ void update_stationdata(void){
 	}
 	f_close(&fil2);
 }
-

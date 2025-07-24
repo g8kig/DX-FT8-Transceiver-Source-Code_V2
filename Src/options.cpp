@@ -39,8 +39,8 @@ OptionStruct s_optionsData[] = {
 		/*Data*/ 0,
 	},
 	{
-		/*Name*/ "  Skip_Tx1 ",   // opt1
-		/*Init*/ 0,				  // Skipping Tx1 is by default, off
+		/*Name*/ "  Skip_Tx1 ", // opt1
+		/*Init*/ 0,				// Skipping Tx1 is by default, off
 		/*Min */ 0,
 		/*Max */ 1,
 		/*Rate*/ 1,

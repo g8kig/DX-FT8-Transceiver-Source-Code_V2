@@ -137,7 +137,7 @@ enum ButtonIds
 	EditFreq,
 	EditComment,
 	EditingWindow,
-	//45-87 is keyboard
+	// 45-87 is keyboard
 	Key1,
 	Key2,
 	Key3,

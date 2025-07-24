@@ -26,4 +26,3 @@ void encode174(const uint8_t *message, uint8_t *codeword);
 uint16_t crc(uint8_t *message, int num_bits);
 
 #endif // ENCODE_H_
-

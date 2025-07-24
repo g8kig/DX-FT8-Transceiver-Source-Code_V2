@@ -17,7 +17,7 @@
 void _debug(const char *txt);
 void tx_display_update();
 
-#define NoOp  __NOP()
+#define NoOp __NOP()
 
 #define MAX_QUEUE_SIZE 9
 
@@ -34,7 +34,7 @@ extern bool clr_pressed;
 extern bool tx_pressed;
 extern bool free_text;
 
-extern const char* test_data_file;
+extern const char *test_data_file;
 
 #endif /* __MAIN_H */
 
