@@ -13,10 +13,17 @@
 #include <Display.h>
 #include <gen_ft8.h>
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 #include "unpack.h"
 #include "ldpc.h"
 #include "decode.h"
 #include "constants.h"
+#ifdef __cplusplus
+}
+#endif
 #include "encode.h"
 #include "button.h"
 #include "main.h"

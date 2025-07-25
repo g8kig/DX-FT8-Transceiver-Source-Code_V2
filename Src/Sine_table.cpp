@@ -31,6 +31,7 @@
 
 #include "arm_math.h"
 #include "SDR_Audio.h"
+#include "Sine_table.h"
 
 /*======================================================================*/
 

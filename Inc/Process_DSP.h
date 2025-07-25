@@ -11,7 +11,14 @@
 #include "SDR_Audio.h"
 #include "arm_math.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 #include "constants.h"
+#ifdef __cplusplus
+}
+#endif
 
 #define ft8_buffer_size 400 // arbitrary for 3 kc
 #define ft8_min_bin 48

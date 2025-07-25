@@ -152,8 +152,8 @@ int16_t Write_Int_MicroSD(uint16_t DiskBlock, int16_t value)
 		if (fres == FR_OK)
 		{
 			sprintf(read_buffer, "%2i", value);
-			fres = f_puts(read_buffer, &MyFile);
-			if (fres > 0 && fres < sizeof(read_buffer))
+			int res = f_puts(read_buffer, &MyFile);
+			if (res > 0 && res < (int)sizeof(read_buffer))
 				result = 1;
 		}
 		f_close(&MyFile);

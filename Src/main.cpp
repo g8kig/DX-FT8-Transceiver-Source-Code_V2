@@ -47,7 +47,16 @@
 #endif
 
 #include "autoseq_engine.h"
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 #include "constants.h"
+#ifdef __cplusplus
+}
+#endif
+
 #include "decode_ft8.h"
 #include "gen_ft8.h"
 #include "log_file.h"

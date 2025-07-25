@@ -21,8 +21,11 @@
 
 #include "stm32746g_discovery.h"
 #include "Codec_Gains.h"
+extern "C"
+{
 #include "wm8994.h"
 #include "stm32746g_discovery_audio.h"
+}
 
 static int minmax(int value, int min, int max)
 {

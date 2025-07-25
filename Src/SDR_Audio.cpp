@@ -14,7 +14,14 @@
 #include "Process_DSP.h"
 #include "main.h" // for decode_flag
 #include "button.h"
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 #include "Sine_table.h"
+#ifdef __cplusplus
+}
+#endif
 
 q15_t FIR_I_In[BUFFERSIZE / 4];
 q15_t FIR_Q_In[BUFFERSIZE / 4];

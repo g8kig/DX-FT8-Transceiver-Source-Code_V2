@@ -12,9 +12,16 @@
 #include <ctype.h>
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 #include "pack.h"
-#include "encode.h"
 #include "constants.h"
+#ifdef __cplusplus
+}
+#endif
+#include "encode.h"
 
 #include "gen_ft8.h"
 
@@ -153,7 +160,8 @@ void Read_Station_File(void)
 
 	f_mount(&FS, SDPath, 1);
 
-	FILINFO filInfo = {0};
+	FILINFO filInfo;
+	memset(&filInfo, 0, sizeof(filInfo));
 
 	if (f_stat(ini_file_name, &filInfo) == FR_OK &&
 		f_open(&fil2, ini_file_name, FA_OPEN_EXISTING | FA_READ) == FR_OK)
