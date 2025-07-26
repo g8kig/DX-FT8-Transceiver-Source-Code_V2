@@ -54,7 +54,8 @@ ASMFLAGS = -mcpu=cortex-m7 -g3 -c -Wall -Wextra -x assembler-with-cpp --specs=na
 
 LDFLAGS = -mcpu=cortex-m7 -TSTM32F746NGHx_FLASH.ld --specs=nosys.specs -Wl,-Map=Katy.map -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv5-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 
-ASM_SRCS = Drivers/CMSIS/Device/ST/STM32F7xx/Source/Templates/gcc/startup_stm32f746xx.s DSP_CMSIS/arm_bitreversal2.s
+ASM_SRCS = Drivers/CMSIS/Device/ST/STM32F7xx/Source/Templates/gcc/startup_stm32f746xx.s \
+		   DSP_CMSIS/arm_bitreversal2.s
 
 C_SRCS = \
 Drivers/BSP/exc7200/exc7200.c \
@@ -189,24 +190,32 @@ Src/Sine_table.cpp \
 Src/traffic_manager.cpp
 
 # Object files
-ASM_OBJS = $(ASM_SRCS:.s=.o)
-C_OBJS = $(C_SRCS:.c=.o)
-CPP_OBJS = $(CPP_SRCS:.cpp=.o)
-OBJS = $(ASM_OBJS) $(C_OBJS) $(CPP_OBJS)
+OBJDIR = build
+
+ASM_OBJS = $(addprefix $(OBJDIR)/,$(ASM_SRCS:.s=.o))
+C_OBJS   = $(addprefix $(OBJDIR)/,$(C_SRCS:.c=.o))
+CPP_OBJS = $(addprefix $(OBJDIR)/,$(CPP_SRCS:.cpp=.o))
+OBJS     = $(ASM_OBJS) $(C_OBJS) $(CPP_OBJS)
 
 TARGET = Katy.elf
 
 .PHONY: all clean flash
 
-all: $(TARGET) Katy.hex Katy.list
+all: $(OBJDIR) $(TARGET) Katy.hex Katy.list
 
-%.o: %.c
-	 $(CC) $(CFLAGS) $(EXTRA_INCLUDES) -c $< -o $@
+$(OBJDIR):
+	mkdir -p $(OBJDIR)
 
-%.o: %.cpp
-	 $(C++) $(CPPFLAGS) $(EXTRA_INCLUDES) -c $< -o $@
+$(OBJDIR)/%.o: %.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) $(EXTRA_INCLUDES) -c $< -o $@
 
-%.o: %.s
+$(OBJDIR)/%.o: %.cpp
+	@mkdir -p $(dir $@)
+	$(C++) $(CPPFLAGS) $(EXTRA_INCLUDES) -c $< -o $@
+
+$(OBJDIR)/%.o: %.s
+	@mkdir -p $(dir $@)
 	$(CC) $(ASMFLAGS) $< -o $@
 
 $(TARGET): $(OBJS)
@@ -227,4 +236,5 @@ flash: $(TARGET)
 
 clean:
 	rm -f $(OBJS) $(TARGET) Katy.hex Katy.list
+	rm -rf $(OBJDIR)
 
