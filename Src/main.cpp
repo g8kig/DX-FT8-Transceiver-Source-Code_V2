@@ -76,6 +76,10 @@ int was_txing = 0;
 bool clr_pressed = false;
 bool free_text = false;
 bool tx_pressed = false;
+bool syncTime = true;
+
+// in stm32746g_discovery.c
+extern I2C_HandleTypeDef hI2cExtHandler;
 
 // Autoseq TX text buffer
 static char autoseq_txbuf[MAX_MSG_LEN];
@@ -93,7 +97,32 @@ static bool tune_pressed = false;
 static void SystemClock_Config(void);
 static void Error_Handler(void);
 static void CPU_CACHE_Enable(void);
-static void HID_InitApplication(void);
+static void InitialiseDisplay(void);
+static bool Initialise_Serial();
+static void update_time(void);
+
+static UART_HandleTypeDef s_UART1Handle = UART_HandleTypeDef();
+struct RTC_Time
+{
+	uint8_t seconds; // 00-59 in BCD
+	uint8_t minutes; // 00-59 in BCD
+	uint8_t hours;	 // 00-23 in BCD
+	uint8_t dayOfWeek;
+	uint8_t day;
+	uint8_t month;
+	uint8_t year;
+};
+
+enum I2COperation
+{
+	OP_TIME_REQUEST = 0,
+	OP_SENDER_RECORD,
+	OP_RECEIVER_RECORD,
+	OP_SEND_REQUEST
+};
+
+static const uint8_t ESP32_I2C_ADDRESS = 0x2A;
+
 #endif
 
 // Helper function for updating TX region display
@@ -183,8 +212,10 @@ int main(void)
 
 	HAL_Init();
 
-	/* Configure the System clock to have a frequency of 200 MHz */
+	/* Configure the System clock to have a frequency of 216 MHz */
 	SystemClock_Config();
+
+	EXT_I2C_Init();
 
 	start_audio_I2C();
 
@@ -194,8 +225,8 @@ int main(void)
 	Check_Board_Version();
 	DeInit_BoardVersionInput();
 
-	HID_InitApplication(); // really sets up LCD Display, leftover from example
-	HAL_Delay(10);
+	InitialiseDisplay();
+	Initialise_Serial();
 	BSP_TS_Init(BSP_LCD_GetXSize(), BSP_LCD_GetYSize());
 
 	init_DSP();
@@ -206,8 +237,6 @@ int main(void)
 
 	Options_Initialize();
 
-	EXT_I2C_Init();
-	HAL_Delay(10);
 	DS3231_init();
 	display_Real_Date(0, 240);
 
@@ -222,7 +251,7 @@ int main(void)
 	HAL_Delay(10);
 	receive_sequence();
 	HAL_Delay(10);
-	Set_Headphone_Gain(30);
+	Set_Headphone_Gain(94);
 	Init_Log_File();
 	FT8_Sync();
 	HAL_Delay(10);
@@ -234,6 +263,8 @@ int main(int argc, char *argv[])
 		test_data_file = argv[1];
 	}
 #endif
+
+	logger("Main loop starting", __FILE__, __LINE__);
 
 	autoseq_init();
 
@@ -379,6 +410,7 @@ int main(int argc, char *argv[])
 		}
 
 		update_synchronization();
+		update_time();
 	}
 }
 
@@ -388,7 +420,7 @@ int main(int argc, char *argv[])
  * @param  None
  * @retval None
  */
-static void HID_InitApplication(void)
+static void InitialiseDisplay(void)
 {
 	/* Configure Key button */
 	BSP_PB_Init(BUTTON_TAMPER, BUTTON_MODE_GPIO);
@@ -440,7 +472,7 @@ void HAL_Delay(__IO uint32_t Delay)
  *            APB2 Prescaler                 = 2
  *            HSE Frequency(Hz)              = 25000000
  *            PLL_M                          = 25
- *            PLL_N                          = 400
+ *            PLL_N                          = 432
  *            PLL_P                          = 2
  *            PLLSAI_N                       = 384
  *            PLLSAI_P                       = 8
@@ -463,15 +495,16 @@ void SystemClock_Config(void)
 	RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
 	RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
 	RCC_OscInitStruct.PLL.PLLM = 25;
-	RCC_OscInitStruct.PLL.PLLN = 400;
+	RCC_OscInitStruct.PLL.PLLN = 432;
 	RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
 	RCC_OscInitStruct.PLL.PLLQ = 8;
+
 	if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
 	{
 		Error_Handler();
 	}
 
-	/* Activate the OverDrive to reach the 200 Mhz Frequency */
+	/* Activate the OverDrive to reach the 216 Mhz Frequency */
 	if (HAL_PWREx_EnableOverDrive() != HAL_OK)
 	{
 		Error_Handler();
@@ -527,6 +560,83 @@ static void CPU_CACHE_Enable(void)
 	/* Enable D-Cache */
 	SCB_EnableDCache();
 }
+
+static bool Initialise_Serial()
+{
+	__USART1_CLK_ENABLE();
+	__I2C1_CLK_ENABLE();
+	__GPIOA_CLK_ENABLE();
+	__GPIOB_CLK_ENABLE();
+	__GPIOG_CLK_ENABLE();
+
+	GPIO_InitTypeDef GPIO_InitStructure;
+
+	// Serial debug Port USART1 TX/RX : PA9/PB7
+	GPIO_InitStructure.Pin = GPIO_PIN_9; // TX
+	GPIO_InitStructure.Mode = GPIO_MODE_AF_PP;
+	GPIO_InitStructure.Alternate = GPIO_AF7_USART1;
+	GPIO_InitStructure.Speed = GPIO_SPEED_HIGH;
+	GPIO_InitStructure.Pull = GPIO_NOPULL;
+	HAL_GPIO_Init(GPIOA, &GPIO_InitStructure);
+
+	GPIO_InitStructure.Pin = GPIO_PIN_7; // RX
+	GPIO_InitStructure.Mode = GPIO_MODE_AF_OD;
+	GPIO_InitStructure.Alternate = GPIO_AF7_USART3;
+	GPIO_InitStructure.Speed = GPIO_SPEED_HIGH;
+	GPIO_InitStructure.Pull = GPIO_NOPULL;
+	HAL_GPIO_Init(GPIOB, &GPIO_InitStructure);
+
+	s_UART1Handle.Instance = USART1;
+	s_UART1Handle.Init.BaudRate = 115200;
+	s_UART1Handle.Init.WordLength = UART_WORDLENGTH_8B;
+	s_UART1Handle.Init.StopBits = UART_STOPBITS_1;
+	s_UART1Handle.Init.Parity = UART_PARITY_NONE;
+	s_UART1Handle.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+	s_UART1Handle.Init.Mode = UART_MODE_TX_RX;
+
+	return (HAL_UART_Init(&s_UART1Handle) == HAL_OK);
+}
+
+void logger(const char *message, const char *file, int line)
+{
+	char buffer[256];
+	if (snprintf(buffer, sizeof(buffer), "%s:%d: %s\n", file, line, message) > 0)
+	{
+		HAL_UART_Transmit(&s_UART1Handle, (uint8_t *)buffer, strlen(buffer), HAL_MAX_DELAY);
+	}
+}
+
+static void update_time(void)
+{
+	if (syncTime)
+	{
+		RTC_Time rtcTime;
+		memset(&rtcTime, 0, sizeof(rtcTime));
+		HAL_StatusTypeDef status = HAL_I2C_Mem_Read(&hI2cExtHandler,
+													ESP32_I2C_ADDRESS << 1,
+													OP_TIME_REQUEST,
+													I2C_MEMADD_SIZE_8BIT,
+													(uint8_t*)&rtcTime,
+													sizeof(rtcTime),
+													HAL_MAX_DELAY);
+		if (status == HAL_OK && rtcTime.year > 24 && rtcTime.year < 99)
+		{
+			char buffer[256];
+
+			syncTime = false;
+
+			sprintf(buffer, "%u %2.2u:%2.2u:%2.2u %2.2u/%2.2u/%2.2u (%u)",
+					status,
+					rtcTime.hours, rtcTime.minutes, rtcTime.seconds,
+					rtcTime.day, rtcTime.month, rtcTime.year,
+					rtcTime.dayOfWeek);
+			logger(buffer, __FILE__, __LINE__);
+
+			RTC_setTime(rtcTime.hours, rtcTime.minutes, rtcTime.seconds, 0, 0);
+			RTC_setDate(rtcTime.day, rtcTime.dayOfWeek, rtcTime.month, rtcTime.year);
+		}
+	}
+}
 #endif
 
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
+/************************ Portions (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

@@ -7,6 +7,7 @@
 
 #ifndef SDR_AUDIO_H_
 #define SDR_AUDIO_H_
+
 #include "arm_math.h"
 
 #define BUFFERSIZE 1280 * 4

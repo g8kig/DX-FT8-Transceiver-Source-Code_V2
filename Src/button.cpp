@@ -30,15 +30,18 @@ uint16_t start_freq;
 int BandIndex;
 int QSO_Fix;
 int CQ_Mode_Index;
-int Free_Index;
-
-int AGC_Gain = 20;
 int Band_Minimum;
 int Skip_Tx1;
+int Logging_State;
 
-char EditingText[MESSAGE_SIZE] = {'\0'};
+int Free_Index = 0;
+int AGC_Gain = 20;
+
+char EditingText[MESSAGE_SIZE] = {0};
 
 char display_frequency[BAND_DATA_SIZE] = "14.075";
+static const char *Logging_On = "On ";
+static const char *Logging_Off = "Off";
 const char *start;
 
 FreqStruct sBand_Data[NumBands] =
@@ -470,7 +473,7 @@ ButtonStruct sButtonData[NumButtons] = {
 	{// button 34 Free Text 2
 	 /*text0*/ "Free2",
 	 /*text1*/ "Free2",
-	 /*blank*/ "    ",
+	 /*blank*/ "     ",
 	 /*Active*/ 0,
 	 /*Displayed*/ 1,
 	 /*state*/ 0,
@@ -479,7 +482,31 @@ ButtonStruct sButtonData[NumButtons] = {
 	 /*w*/ 160,
 	 /*h*/ 30},
 
-	{// button 35 SkipTx1
+	{// button Logging
+	 /*text0*/ "Logging",
+	 /*text1*/ "Logging",
+	 /*blank*/ "       ",
+	 /*Active*/ 1,
+	 /*Displayed*/ 1,
+	 /*state*/ 0,
+	 /*x*/ 240,
+	 /*y*/ 120,
+	 /*w*/ 90,
+	 /*h*/ 30},
+
+	{// button Logging On/Off
+	 /*text0*/ " On",
+	 /*text1*/ "Off",
+	 /*blank*/ "   ",
+	 /*Active*/ 1,
+	 /*Displayed*/ 1,
+	 /*state*/ 0,
+	 /*x*/ 330,
+	 /*y*/ 120,
+	 /*w*/ 20,
+	 /*h*/ 30},
+
+	{// button SkipTx1
 	 /*text0*/ "SkipTx1",
 	 /*text1*/ "SkipTx1",
 	 /*blank*/ "        ",
@@ -491,7 +518,7 @@ ButtonStruct sButtonData[NumButtons] = {
 	 /*w*/ 110,
 	 /*h*/ 30},
 
-	{// button 36 Call
+	{// button Call
 	 /*text0*/ Station_Call,
 	 /*text1*/ Station_Call,
 	 /*blank*/ "    ",
@@ -503,7 +530,7 @@ ButtonStruct sButtonData[NumButtons] = {
 	 /*w*/ 70,
 	 /*h*/ 30},
 
-	{// button 37 Grid
+	{// button Grid
 	 /*text0*/ Locator,
 	 /*text1*/ Locator,
 	 /*blank*/ "    ",
@@ -613,6 +640,7 @@ void drawButton(uint16_t button)
 		BSP_LCD_SetBackColor(LCD_COLOR_BLACK);
 	}
 }
+
 void drawKey(uint16_t button)
 {
 	BSP_LCD_SetFont(&Font24);
@@ -725,9 +753,14 @@ static void update_CQFree_buttons()
 
 static void HandleKeyPress(char c, uint16_t keyIndex)
 {
-    AppendChar(EditingText, c);
-    UpdateEditingWindow();
-    toggle_key_state(keyIndex);
+	AppendChar(EditingText, c);
+	UpdateEditingWindow();
+	toggle_key_state(keyIndex);
+}
+
+static void set_button_text(int btn, const char *button_text)
+{
+	sButtonData[btn].text0 = sButtonData[btn].text1 = (char *)button_text;
 }
 
 void executeButton(uint16_t index)
@@ -755,18 +788,13 @@ void executeButton(uint16_t index)
 	case Tune:
 		if (!sButtonData[Tune].state)
 		{
-			// tune_Off_sequence();
 			Tune_On = 0;
-			// Arm_Tune = 0;
-			// xmit_flag = 0;
-			// receive_sequence();
 			erase_Cal_Display();
 		}
 		else
 		{
 			Tune_On = 1; // Turns off display of FT8 traffic
 			setup_Cal_Display();
-			// Arm_Tune = 0;
 		}
 		break;
 
@@ -892,6 +920,17 @@ void executeButton(uint16_t index)
 			Free_Index = index - FreeText1;
 		}
 		update_CQFree_buttons();
+		break;
+
+	case LoggingMsg:
+	case LoggingOnOff:
+		Logging_State = Logging_State == 0 ? 1 : 0;
+		set_button_text(LoggingOnOff, Logging_State ? Logging_On : Logging_Off);
+		sButtonData[LoggingMsg].state = 0;
+		drawButton(LoggingMsg);
+		sButtonData[LoggingOnOff].state = Logging_State;
+		drawButton(LoggingOnOff);
+		logger("Logging state changed", __FILE__, __LINE__);
 		break;
 
 	case SkipTx1:
@@ -1287,6 +1326,8 @@ void setup_Cal_Display(void)
 	}
 
 	show_wide(340, 55, start_freq);
+
+	syncTime = true;
 
 	load_RealTime();
 	display_RTC_TimeEdit(RTC_Button - 20, RTC_line0 + 15);

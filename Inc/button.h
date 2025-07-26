@@ -102,7 +102,6 @@ enum ButtonIds
 	GainUp,
 	FreqDown,
 	FreqUp,
-
 	BandDown,
 	BandUp,
 	TxCalibrate,
@@ -127,6 +126,8 @@ enum ButtonIds
 	QRPP,
 	FreeText1,
 	FreeText2,
+	LoggingMsg,
+	LoggingOnOff,
 	SkipTx1,
 	Call,
 	Grid,
@@ -181,7 +182,7 @@ enum ButtonIds
 	KeyQMark,
 	KeySpace,
 	KeyBack,
-	NumButtons = 88
+	NumButtons = 90
 };
 
 extern int Tune_On; // 0 = Receive, 1 = Xmit Tune Signal
@@ -194,6 +195,7 @@ extern int BandIndex;
 extern int Band_Minimum;
 extern FreqStruct sBand_Data[NumBands];
 extern int AGC_Gain;
+extern int Logging_State;
 extern int Skip_Tx1;
 extern char display_frequency[BAND_DATA_SIZE];
 
