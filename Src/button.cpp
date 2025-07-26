@@ -674,7 +674,7 @@ void SelectFilterBlock()
 	}
 }
 
-static void toggle_button_state(int button)
+static void toggle_button_state(uint16_t button)
 {
 	sButtonData[button].state = 1;
 	drawButton(button);
@@ -683,7 +683,7 @@ static void toggle_button_state(int button)
 	drawButton(button);
 }
 
-static void toggle_key_state(int button)
+static void toggle_key_state(uint16_t button)
 {
 	sButtonData[button].state = 1;
 	drawKey(button);
@@ -721,6 +721,13 @@ static void update_CQFree_buttons()
 	drawButton(CQFree);
 	drawButton(FreeText1);
 	drawButton(FreeText2);
+}
+
+static void HandleKeyPress(char c, uint16_t keyIndex)
+{
+    AppendChar(EditingText, c);
+    UpdateEditingWindow();
+    toggle_key_state(keyIndex);
 }
 
 void executeButton(uint16_t index)
@@ -1024,214 +1031,130 @@ void executeButton(uint16_t index)
 		break;
 
 	case Key1:
-		AppendChar(EditingText, '1');
-		UpdateEditingWindow();
-		toggle_key_state(Key1);
+		HandleKeyPress('1', Key1);
 		break;
 	case Key2:
-		AppendChar(EditingText, '2');
-		UpdateEditingWindow();
-		toggle_key_state(Key2);
+		HandleKeyPress('2', Key2);
 		break;
 	case Key3:
-		AppendChar(EditingText, '3');
-		UpdateEditingWindow();
-		toggle_key_state(Key3);
+		HandleKeyPress('3', Key3);
 		break;
 	case Key4:
-		AppendChar(EditingText, '4');
-		UpdateEditingWindow();
-		toggle_key_state(Key4);
+		HandleKeyPress('4', Key4);
 		break;
 	case Key5:
-		AppendChar(EditingText, '5');
-		UpdateEditingWindow();
-		toggle_key_state(Key5);
+		HandleKeyPress('5', Key5);
 		break;
 	case Key6:
-		AppendChar(EditingText, '6');
-		UpdateEditingWindow();
-		toggle_key_state(Key6);
+		HandleKeyPress('6', Key6);
 		break;
 	case Key7:
-		AppendChar(EditingText, '7');
-		UpdateEditingWindow();
-		toggle_key_state(Key7);
+		HandleKeyPress('7', Key7);
 		break;
 	case Key8:
-		AppendChar(EditingText, '8');
-		UpdateEditingWindow();
-		toggle_key_state(Key8);
+		HandleKeyPress('8', Key8);
 		break;
 	case Key9:
-		AppendChar(EditingText, '9');
-		UpdateEditingWindow();
-		toggle_key_state(Key9);
+		HandleKeyPress('9', Key9);
 		break;
 	case Key0:
-		AppendChar(EditingText, '0');
-		UpdateEditingWindow();
-		toggle_key_state(Key0);
+		HandleKeyPress('0', Key0);
 		break;
 	case KeyDash:
-		AppendChar(EditingText, '-');
-		UpdateEditingWindow();
-		toggle_key_state(KeyDash);
+		HandleKeyPress('-', KeyDash);
 		break;
 	case KeyQ:
-		AppendChar(EditingText, 'Q');
-		UpdateEditingWindow();
-		toggle_key_state(KeyQ);
+		HandleKeyPress('Q', KeyQ);
 		break;
 	case KeyW:
-		AppendChar(EditingText, 'W');
-		UpdateEditingWindow();
-		toggle_key_state(KeyW);
+		HandleKeyPress('W', KeyW);
 		break;
 	case KeyE:
-		AppendChar(EditingText, 'E');
-		UpdateEditingWindow();
-		toggle_key_state(KeyE);
+		HandleKeyPress('E', KeyE);
 		break;
 	case KeyR:
-		AppendChar(EditingText, 'R');
-		UpdateEditingWindow();
-		toggle_key_state(KeyR);
+		HandleKeyPress('R', KeyR);
 		break;
 	case KeyT:
-		AppendChar(EditingText, 'T');
-		UpdateEditingWindow();
-		toggle_key_state(KeyT);
+		HandleKeyPress('T', KeyT);
 		break;
 	case KeyY:
-		AppendChar(EditingText, 'Y');
-		UpdateEditingWindow();
-		toggle_key_state(KeyY);
+		HandleKeyPress('Y', KeyY);
 		break;
 	case KeyU:
-		AppendChar(EditingText, 'U');
-		UpdateEditingWindow();
-		toggle_key_state(KeyU);
+		HandleKeyPress('U', KeyU);
 		break;
 	case KeyI:
-		AppendChar(EditingText, 'I');
-		UpdateEditingWindow();
-		toggle_key_state(KeyI);
+		HandleKeyPress('I', KeyI);
 		break;
 	case KeyO:
-		AppendChar(EditingText, 'O');
-		UpdateEditingWindow();
-		toggle_key_state(KeyO);
+		HandleKeyPress('O', KeyO);
 		break;
 	case KeyP:
-		AppendChar(EditingText, 'P');
-		UpdateEditingWindow();
-		toggle_key_state(KeyP);
+		HandleKeyPress('P', KeyP);
 		break;
 	case keyPlus:
-		AppendChar(EditingText, '+');
-		UpdateEditingWindow();
-		toggle_key_state(keyPlus);
+		HandleKeyPress('+', keyPlus);
 		break;
 	case KeyA:
-		AppendChar(EditingText, 'A');
-		UpdateEditingWindow();
-		toggle_key_state(KeyA);
+		HandleKeyPress('A', KeyA);
 		break;
 	case KeyS:
-		AppendChar(EditingText, 'S');
-		UpdateEditingWindow();
-		toggle_key_state(KeyS);
+		HandleKeyPress('S', KeyS);
 		break;
 	case KeyD:
-		AppendChar(EditingText, 'D');
-		UpdateEditingWindow();
-		toggle_key_state(KeyD);
+		HandleKeyPress('D', KeyD);
 		break;
 	case KeyF:
-		AppendChar(EditingText, 'F');
-		UpdateEditingWindow();
-		toggle_key_state(KeyF);
+		HandleKeyPress('F', KeyF);
 		break;
 	case KeyG:
-		AppendChar(EditingText, 'G');
-		UpdateEditingWindow();
-		toggle_key_state(KeyG);
+		HandleKeyPress('G', KeyG);
 		break;
 	case KeyH:
-		AppendChar(EditingText, 'H');
-		UpdateEditingWindow();
-		toggle_key_state(KeyH);
+		HandleKeyPress('H', KeyH);
 		break;
 	case KeyJ:
-		AppendChar(EditingText, 'J');
-		UpdateEditingWindow();
-		toggle_key_state(KeyJ);
+		HandleKeyPress('J', KeyJ);
 		break;
 	case KeyK:
-		AppendChar(EditingText, 'K');
-		UpdateEditingWindow();
-		toggle_key_state(KeyK);
+		HandleKeyPress('K', KeyK);
 		break;
 	case KeyL:
-		AppendChar(EditingText, 'L');
-		UpdateEditingWindow();
-		toggle_key_state(KeyL);
+		HandleKeyPress('L', KeyL);
 		break;
 	case Keydot:
-		AppendChar(EditingText, '.');
-		UpdateEditingWindow();
-		toggle_key_state(Keydot);
+		HandleKeyPress('.', Keydot);
 		break;
 	case KeySlash:
-		AppendChar(EditingText, '/');
-		UpdateEditingWindow();
-		toggle_key_state(KeySlash);
+		HandleKeyPress('/', KeySlash);
 		break;
 	case KeyZ:
-		AppendChar(EditingText, 'Z');
-		UpdateEditingWindow();
-		toggle_key_state(KeyZ);
+		HandleKeyPress('Z', KeyZ);
 		break;
 	case KeyX:
-		AppendChar(EditingText, 'X');
-		UpdateEditingWindow();
-		toggle_key_state(KeyX);
+		HandleKeyPress('X', KeyX);
 		break;
 	case KeyC:
-		AppendChar(EditingText, 'C');
-		UpdateEditingWindow();
-		toggle_key_state(KeyC);
+		HandleKeyPress('C', KeyC);
 		break;
 	case KeyV:
-		AppendChar(EditingText, 'V');
-		UpdateEditingWindow();
-		toggle_key_state(KeyV);
+		HandleKeyPress('V', KeyV);
 		break;
 	case KeyB:
-		AppendChar(EditingText, 'B');
-		UpdateEditingWindow();
-		toggle_key_state(KeyB);
+		HandleKeyPress('B', KeyB);
 		break;
 	case KeyN:
-		AppendChar(EditingText, 'N');
-		UpdateEditingWindow();
-		toggle_key_state(KeyN);
+		HandleKeyPress('N', KeyN);
 		break;
 	case KeyM:
-		AppendChar(EditingText, 'M');
-		UpdateEditingWindow();
-		toggle_key_state(KeyM);
+		HandleKeyPress('M', KeyM);
 		break;
 	case KeyQMark:
-		AppendChar(EditingText, '?');
-		UpdateEditingWindow();
-		toggle_key_state(KeyQMark);
+		HandleKeyPress('?', KeyQMark);
 		break;
 	case KeySpace:
-		AppendChar(EditingText, ' ');
-		UpdateEditingWindow();
-		toggle_key_state(KeySpace);
+		HandleKeyPress(' ', KeySpace);
 		break;
 	case KeyBack:
 		DeleteLastChar(EditingText);
