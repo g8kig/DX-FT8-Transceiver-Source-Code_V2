@@ -616,7 +616,7 @@ static void update_time(void)
 													ESP32_I2C_ADDRESS << 1,
 													OP_TIME_REQUEST,
 													I2C_MEMADD_SIZE_8BIT,
-													(uint8_t*)&rtcTime,
+													(uint8_t *)&rtcTime,
 													sizeof(rtcTime),
 													HAL_MAX_DELAY);
 		if (status == HAL_OK && rtcTime.year > 24 && rtcTime.year < 99)
@@ -637,6 +637,80 @@ static void update_time(void)
 		}
 	}
 }
+
+bool addSenderRecord(const char *callsign, const char *gridSquare, const char *software)
+{
+	bool result = false;
+	uint8_t buffer[32];
+	size_t callsignLength = strlen(callsign);
+	size_t gridSquareLength = strlen(gridSquare);
+	size_t softwareLength = strlen(software);
+
+	size_t bufferSize = sizeof(uint8_t) + callsignLength + sizeof(uint8_t) + gridSquareLength + sizeof(uint8_t) + softwareLength;
+	if (bufferSize < sizeof(buffer))
+	{
+		uint8_t *ptr = buffer;
+
+		// Add callsign as length-delimited
+		*ptr++ = callsignLength;
+		memcpy(ptr, callsign, callsignLength);
+		ptr += callsignLength;
+
+		// Add gridSquare as length-delimited
+		*ptr++ = gridSquareLength;
+		memcpy(ptr, callsign, gridSquareLength);
+		ptr += gridSquareLength;
+
+		// Add software as length-delimited
+		*ptr++ = softwareLength;
+		memcpy(ptr, software, softwareLength);
+
+		HAL_StatusTypeDef status = HAL_I2C_Mem_Write(&hI2cExtHandler,
+													 ESP32_I2C_ADDRESS << 1,
+													 OP_SENDER_RECORD,
+													 I2C_MEMADD_SIZE_8BIT,
+													 buffer,
+													 bufferSize,
+													 HAL_MAX_DELAY);
+		result = status == HAL_OK;
+	}
+	return result;
+}
+
+bool addReceivedRecord(const char *callsign, uint32_t frequency, uint8_t snr)
+{
+	bool result = false;
+	uint8_t buffer[32];
+	size_t callsignLength = strlen(callsign);
+	size_t bufferSize = sizeof(uint8_t) + callsignLength + sizeof(uint32_t) + sizeof(uint8_t);
+	if (bufferSize < sizeof(buffer))
+	{
+		uint8_t *ptr = buffer;
+
+		// Add callsign as length-delimited
+		*ptr++ = callsignLength;
+		memcpy(ptr, callsign, callsignLength);
+		ptr += callsignLength;
+
+		// Add frequency
+		memcpy(ptr, &frequency, sizeof(frequency));
+		ptr += sizeof(frequency);
+
+		// Add SNR (1 byte)
+		*ptr = snr;
+
+		HAL_StatusTypeDef status = HAL_I2C_Mem_Write(&hI2cExtHandler,
+													 ESP32_I2C_ADDRESS << 1,
+													 OP_RECEIVER_RECORD,
+													 I2C_MEMADD_SIZE_8BIT,
+													 buffer,
+													 bufferSize,
+													 HAL_MAX_DELAY);
+		result = status == HAL_OK;
+	}
+	return result;
+}
+
 #endif
 
 /************************ Portions (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
