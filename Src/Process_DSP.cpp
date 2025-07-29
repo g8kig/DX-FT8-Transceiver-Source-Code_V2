@@ -97,11 +97,11 @@ void process_FT8_FFT(void)
 
 		++FT_8_counter;
 
-		if (FT_8_counter == ft8_msg_samples) {
+		if (FT_8_counter == ft8_msg_samples)
+		{
 			decode_flag = 1;
 			ft8_flag = 0;
 		}
-
 	}
 }
 

@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 #include "stm32746g_discovery_ts.h"
 #include "stm32746g_discovery_lcd.h"
 #include "Process_DSP.h"
@@ -5,7 +7,6 @@
 #include "Display.h"
 #include "gen_ft8.h"
 #include "main.h"
-#include "stdio.h"
 #include "decode_ft8.h"
 #include "WF_Table.h"
 

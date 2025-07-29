@@ -17,7 +17,7 @@
 void _debug(const char *txt);
 void tx_display_update();
 
-#define NoOp  __NOP()
+#define NoOp __NOP()
 
 #define MAX_QUEUE_SIZE 9
 
@@ -34,7 +34,13 @@ extern bool clr_pressed;
 extern bool tx_pressed;
 extern bool free_text;
 
-extern const char* test_data_file;
+extern const char *test_data_file;
+extern bool syncTime;
+void logger(const char *message, const char* file, int line);
+void updateTime(void);
+bool addSenderRecord(const char *callsign, const char *gridSquare, const char *software);
+bool addReceivedRecord(const char *callsign, uint32_t frequency, uint8_t snr);
+bool sendRequest();
 
 #endif /* __MAIN_H */
 

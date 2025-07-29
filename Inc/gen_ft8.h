@@ -34,7 +34,7 @@ extern char Comment[MESSAGE_SIZE];
 void Read_Station_File(void);
 void SD_Initialize(void);
 
-void queue_custom_text(const char *plain_text);   /* needed by autoseq_engine */
+void queue_custom_text(const char *plain_text); /* needed by autoseq_engine */
 
 extern void update_stationdata(void);
 

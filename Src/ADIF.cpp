@@ -6,14 +6,14 @@
  */
 
 #include <ctype.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
 
 #include "ADIF.h"
 #include "gen_ft8.h"
 #include "DS3231.h"
 #include "decode_ft8.h"
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
 #include "log_file.h"
 #ifndef HOST_HAL_MOCK
 #include "button.h"
