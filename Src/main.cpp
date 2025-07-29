@@ -125,7 +125,7 @@ static const uint8_t ESP32_I2C_ADDRESS = 0x2A;
 #endif
 
 // Helper function for updating TX region display
-void tx_display_update()
+static void tx_display_update()
 {
 	if (Tune_On || worked_qsos_in_display)
 	{

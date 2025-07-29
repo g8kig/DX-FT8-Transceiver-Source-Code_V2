@@ -200,10 +200,3 @@ static void remove_header()
     assert(num_qsos > 0);
     --num_qsos;
 }
-
-// show debug text on LCD
-void _debug(const char *txt)
-{
-    return;
-    display_line(true, 8, Black, Yellow, txt);
-}
