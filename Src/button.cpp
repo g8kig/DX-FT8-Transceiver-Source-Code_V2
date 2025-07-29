@@ -40,7 +40,7 @@ int AGC_Gain = 20;
 char EditingText[MESSAGE_SIZE] = {0};
 
 char display_frequency[BAND_DATA_SIZE] = "14.075";
-static const char *Logging_On = "On ";
+static const char *Logging_On = " On";
 static const char *Logging_Off = "Off";
 const char *start;
 
@@ -201,7 +201,7 @@ ButtonStruct sButtonData[NumButtons] = {
 	 /*Active*/ 0,
 	 /*Displayed*/ 1,
 	 /*state*/ 0,
-	 /*x*/ 270,
+	 /*x*/ 240,
 	 /*y*/ 40,
 	 /*w*/ button_width,
 	 /*h*/ 30},
@@ -213,7 +213,7 @@ ButtonStruct sButtonData[NumButtons] = {
 	 /*Active*/ 0,
 	 /*Displayed*/ 1,
 	 /*state*/ 0,
-	 /*x*/ 420,
+	 /*x*/ 365,
 	 /*y*/ 40,
 	 /*w*/ button_width,
 	 /*h*/ 30},
@@ -225,7 +225,7 @@ ButtonStruct sButtonData[NumButtons] = {
 	 /*Active*/ 0,
 	 /*Displayed*/ 1,
 	 /*state*/ 0,
-	 /*x*/ 420,
+	 /*x*/ 430,
 	 /*y*/ SETUP_line1,
 	 /*w*/ button_width,
 	 /*h*/ 30},
@@ -237,8 +237,8 @@ ButtonStruct sButtonData[NumButtons] = {
 	 /*Active*/ 0,
 	 /*Displayed*/ 1,
 	 /*state*/ 0,
-	 /*x*/ 356,
-	 /*y*/ 65,
+	 /*x*/ 430,
+	 /*y*/ 40,
 	 /*w*/ button_width,
 	 /*h*/ 30},
 
@@ -490,19 +490,19 @@ ButtonStruct sButtonData[NumButtons] = {
 	 /*Displayed*/ 1,
 	 /*state*/ 0,
 	 /*x*/ 240,
-	 /*y*/ 120,
+	 /*y*/ SETUP_line1,
 	 /*w*/ 90,
 	 /*h*/ 30},
 
 	{// button Logging On/Off
-	 /*text0*/ " On",
-	 /*text1*/ "Off",
+	 /*text0*/ Logging_On,
+	 /*text1*/ Logging_Off,
 	 /*blank*/ "   ",
 	 /*Active*/ 1,
 	 /*Displayed*/ 1,
 	 /*state*/ 0,
-	 /*x*/ 330,
-	 /*y*/ 120,
+	 /*x*/ 322,
+	 /*y*/ SETUP_line1,
 	 /*w*/ 20,
 	 /*h*/ 30},
 
@@ -1225,7 +1225,7 @@ void executeCalibrationButton(uint16_t index)
 		if (BandIndex > Band_Minimum)
 		{
 			BandIndex--;
-			show_wide(340, 55, sBand_Data[BandIndex].Frequency);
+			show_wide(290, 55, sBand_Data[BandIndex].Frequency);
 			sprintf(display_frequency, "%s", sBand_Data[BandIndex].display);
 		}
 		break;
@@ -1234,7 +1234,7 @@ void executeCalibrationButton(uint16_t index)
 		if (BandIndex < _10M)
 		{
 			BandIndex++;
-			show_wide(340, 55, sBand_Data[BandIndex].Frequency);
+			show_wide(290, 55, sBand_Data[BandIndex].Frequency);
 			sprintf(display_frequency, "%s", sBand_Data[BandIndex].display);
 		}
 		break;
@@ -1325,7 +1325,7 @@ void setup_Cal_Display(void)
 		drawButton(button);
 	}
 
-	show_wide(340, 55, start_freq);
+	show_wide(290, 55, start_freq);
 
 	syncTime = true;
 

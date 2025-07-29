@@ -633,7 +633,7 @@ static void update_time(void)
 			logger(buffer, __FILE__, __LINE__);
 
 			RTC_setTime(rtcTime.hours, rtcTime.minutes, rtcTime.seconds, 0, 0);
-			RTC_setDate(rtcTime.day, rtcTime.dayOfWeek, rtcTime.month, rtcTime.year);
+			RTC_setDate(rtcTime.dayOfWeek, rtcTime.day, rtcTime.month, rtcTime.year);
 		}
 	}
 }
