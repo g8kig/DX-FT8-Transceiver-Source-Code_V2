@@ -52,35 +52,38 @@ void write_ADIF_Log(void)
 	make_Real_Time();
 	make_Real_Date();
 
-	static char log_line[300];
-	const char *freq = sBand_Data[BandIndex].display;
+	if (Logging_State)
+	{
+		static char log_line[300];
+		const char *freq = sBand_Data[BandIndex].display;
 
-	int offset = sprintf(log_line, "<call:%1u>%s ", num_chars(Target_Call), trim_front(Target_Call));
-	int target_locator_len = num_chars(Target_Locator);
-	if (target_locator_len > 0)
-		offset += sprintf(log_line + offset, "<gridsquare:%1u>%s ", target_locator_len, trim_front(Target_Locator));
-	offset += sprintf(log_line + offset, "<mode:3>FT8<qso_date:%1u>%s ", num_chars(log_rtc_date_string), trim_front(log_rtc_date_string));
-	offset += sprintf(log_line + offset, "<time_on:%1u>%s ", num_chars(log_rtc_time_string), trim_front(log_rtc_time_string));
-	offset += sprintf(log_line + offset, "<freq:%1u>%s ", num_chars(freq), trim_front(freq));
-	offset += sprintf(log_line + offset, "<station_callsign:%1u>%s ", num_chars(Station_Call), trim_front(Station_Call));
-	offset += sprintf(log_line + offset, "<my_gridsquare:%1u>%s ", num_chars(Locator), trim_front(Locator));
+		int offset = sprintf(log_line, "<call:%1u>%s ", num_chars(Target_Call), trim_front(Target_Call));
+		int target_locator_len = num_chars(Target_Locator);
+		if (target_locator_len > 0)
+			offset += sprintf(log_line + offset, "<gridsquare:%1u>%s ", target_locator_len, trim_front(Target_Locator));
+		offset += sprintf(log_line + offset, "<mode:3>FT8<qso_date:%1u>%s ", num_chars(log_rtc_date_string), trim_front(log_rtc_date_string));
+		offset += sprintf(log_line + offset, "<time_on:%1u>%s ", num_chars(log_rtc_time_string), trim_front(log_rtc_time_string));
+		offset += sprintf(log_line + offset, "<freq:%1u>%s ", num_chars(freq), trim_front(freq));
+		offset += sprintf(log_line + offset, "<station_callsign:%1u>%s ", num_chars(Station_Call), trim_front(Station_Call));
+		offset += sprintf(log_line + offset, "<my_gridsquare:%1u>%s ", num_chars(Locator), trim_front(Locator));
 
-	int rsl_len = num_digits(Target_RSL);
-	if (rsl_len > 0)
-		offset += sprintf(log_line + offset, "<rst_sent:%1u:N>%i ", rsl_len, Target_RSL);
+		int rsl_len = num_digits(Target_RSL);
+		if (rsl_len > 0)
+			offset += sprintf(log_line + offset, "<rst_sent:%1u:N>%i ", rsl_len, Target_RSL);
 
-	rsl_len = num_digits(Station_RSL);
-	if (rsl_len > 0)
-		offset += sprintf(log_line + offset, "<rst_rcvd:%1u:N>%i ", rsl_len, Station_RSL);
+		rsl_len = num_digits(Station_RSL);
+		if (rsl_len > 0)
+			offset += sprintf(log_line + offset, "<rst_rcvd:%1u:N>%i ", rsl_len, Station_RSL);
 
-	rsl_len = strlen(Comment);
-	if (rsl_len > 0)
-		offset += sprintf(log_line + offset, "<comment:%u>%s ", rsl_len, Comment);
+		rsl_len = strlen(Comment);
+		if (rsl_len > 0)
+			offset += sprintf(log_line + offset, "<comment:%u>%s ", rsl_len, Comment);
 
-	strcpy(log_line + offset, "<tx_pwr:4>0.5 <eor>");
+		strcpy(log_line + offset, "<tx_pwr:4>0.5 <eor>");
 
-	// Force NULL termination
-	log_line[sizeof(log_line) - 1] = '\0';
+		// Force NULL termination
+		log_line[sizeof(log_line) - 1] = '\0';
 
-	Write_Log_Data(log_line);
+		Write_Log_Data(log_line);
+	}
 }
