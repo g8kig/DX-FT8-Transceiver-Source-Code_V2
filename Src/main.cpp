@@ -711,6 +711,19 @@ bool addReceivedRecord(const char *callsign, uint32_t frequency, uint8_t snr)
 	return result;
 }
 
+bool sendRequest()
+{
+	char buffer[1] = { 0 };
+	HAL_StatusTypeDef status = HAL_I2C_Mem_Write(&hI2cExtHandler,
+													ESP32_I2C_ADDRESS << 1,
+													OP_SEND_REQUEST,
+													I2C_MEMADD_SIZE_8BIT,
+													buffer,
+													1,
+													HAL_MAX_DELAY);
+	return status == HAL_OK;
+}
+
 #endif
 
 /************************ Portions (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
