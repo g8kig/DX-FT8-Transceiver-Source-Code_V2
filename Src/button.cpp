@@ -226,7 +226,7 @@ ButtonStruct sButtonData[NumButtons] = {
 	 /*Displayed*/ 1,
 	 /*state*/ 0,
 	 /*x*/ 430,
-	 /*y*/ SETUP_line1,
+	 /*y*/ 70,
 	 /*w*/ button_width,
 	 /*h*/ 30},
 
@@ -542,7 +542,7 @@ ButtonStruct sButtonData[NumButtons] = {
 	 /*w*/ 60,
 	 /*h*/ 30},
 
-	{// button 38 EditCall
+	{// button 40 EditCall
 	 /*text0*/ "CALL",
 	 /*text1*/ "CALL",
 	 /*blank*/ "    ",
@@ -554,7 +554,7 @@ ButtonStruct sButtonData[NumButtons] = {
 	 /*w*/ 30,
 	 /*h*/ 30},
 
-	{// button 39 EditGrid
+	{// button 41 EditGrid
 	 /*text0*/ "GRID",
 	 /*text1*/ "GRID",
 	 /*blank*/ "    ",
@@ -951,7 +951,7 @@ void executeButton(uint16_t index)
 			strcpy(EditingText, Station_Call);
 			sButtonData[EditingWindow].text0 = EditingText;
 			EnableKeyboard();
-			for (int i = 38; i < 44; i++)
+			for (int i = 40; i < 46; i++)
 				sButtonData[i].Active = 0;
 			sButtonData[EditCall].Active = 1;
 		}
@@ -971,7 +971,7 @@ void executeButton(uint16_t index)
 			strcpy(EditingText, Locator);
 			sButtonData[EditingWindow].text0 = EditingText;
 			EnableKeyboard();
-			for (int i = 38; i < 44; i++)
+			for (int i = EditCall; i < EditingWindow; i++)
 				sButtonData[i].Active = 0;
 			sButtonData[EditGrid].Active = 1;
 		}
@@ -992,7 +992,7 @@ void executeButton(uint16_t index)
 			strcpy(EditingText, display_frequency);
 			sButtonData[EditingWindow].text0 = EditingText;
 			EnableKeyboard();
-			for (int i = 38; i < 44; i++)
+			for (int i = EditCall; i < EditingWindow; i++)
 				sButtonData[i].Active = 0;
 			sButtonData[EditFreq].Active = 1;
 		}
@@ -1013,7 +1013,7 @@ void executeButton(uint16_t index)
 			strcpy(EditingText, Comment);
 			sButtonData[EditingWindow].text0 = EditingText;
 			EnableKeyboard();
-			for (int i = 38; i < 44; i++)
+			for (int i = EditCall; i < EditingWindow; i++)
 				sButtonData[i].Active = 0;
 			sButtonData[EditComment].Active = 1;
 		}
@@ -1032,7 +1032,7 @@ void executeButton(uint16_t index)
 			strcpy(EditingText, Free_Text1);
 			sButtonData[EditingWindow].text0 = EditingText;
 			EnableKeyboard();
-			for (int i = 38; i < 44; i++)
+			for (int i = EditCall; i < EditingWindow; i++)
 				sButtonData[i].Active = 0;
 			sButtonData[EditFreeText1].Active = 1;
 		}
@@ -1052,7 +1052,7 @@ void executeButton(uint16_t index)
 			strcpy(EditingText, Free_Text2);
 			sButtonData[EditingWindow].text0 = EditingText;
 			EnableKeyboard();
-			for (int i = 38; i < 44; i++)
+			for (int i = EditCall; i < EditingWindow; i++)
 				sButtonData[i].Active = 0;
 			sButtonData[EditFreeText2].Active = 1;
 		}
@@ -1543,7 +1543,7 @@ void DisableKeyboard(void)
 	BSP_LCD_FillRect(0, 50, 480, 180);
 
 	setup_Cal_Display();
-	show_wide(340, 55, sBand_Data[BandIndex].Frequency);
+	show_wide(290, 55, sBand_Data[BandIndex].Frequency);
 }
 
 void AppendChar(char *str, char c)
