@@ -99,7 +99,6 @@ static void Error_Handler(void);
 static void CPU_CACHE_Enable(void);
 static void InitialiseDisplay(void);
 static bool Initialise_Serial();
-static void update_time(void);
 
 static UART_HandleTypeDef s_UART1Handle = UART_HandleTypeDef();
 struct RTC_Time
@@ -410,7 +409,7 @@ int main(int argc, char *argv[])
 		}
 
 		update_synchronization();
-		update_time();
+		updateTime();
 	}
 }
 
@@ -606,7 +605,7 @@ void logger(const char *message, const char *file, int line)
 	}
 }
 
-static void update_time(void)
+void updateTime(void)
 {
 	if (syncTime)
 	{
