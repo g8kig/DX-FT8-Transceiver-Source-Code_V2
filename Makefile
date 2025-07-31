@@ -6,7 +6,7 @@
 
 # STM32 toolchain path
 ifeq ($(strip $(HOME)),)
-TOOLCHAIN_PATH = $(HOMEPATH)/.platformio/packages/toolchain-gccarmnoneeabi/bin
+TOOLCHAIN_PATH = $(USERPROFILE)/.platformio/packages/toolchain-gccarmnoneeabi/bin
 else
 TOOLCHAIN_PATH = $(HOME)/.platformio/packages/toolchain-gccarmnoneeabi/bin/
 endif
