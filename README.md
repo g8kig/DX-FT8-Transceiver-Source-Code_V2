@@ -17,6 +17,6 @@
 ## Links to Important Related Websites:
 ### - Barb's DX_FT8 Project: https://github.com/WB2CBA/DX-FT8-FT8-MULTIBAND-TABLET-TRANSCEIVER
 ### - Paul's GitHub Repository with earlier source code: https://github.com/g8kig/DX-FT8-MULTIBAND-TABLET-TRANSCEIVER-Source
-### - uSDX Users Group: [https://dxft8.groups.io/g/main](https://groups.io/g/ucx)
+### - uSDX Users Group: https://groups.io/g/ucx
 ## What's Next?
 ## Since the Source Code is Open Source we invite you to join in with your improvements!!
