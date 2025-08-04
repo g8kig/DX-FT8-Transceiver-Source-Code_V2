@@ -664,13 +664,14 @@ bool addSenderRecord(const char *callsign, const char *gridSquare, const char *s
 		// Add software as length-delimited
 		*ptr++ = softwareLength;
 		memcpy(ptr, software, softwareLength);
+		ptr += softwareLength;
 
 		HAL_StatusTypeDef status = HAL_I2C_Mem_Write(&hI2cExtHandler,
 													 ESP32_I2C_ADDRESS << 1,
 													 OP_SENDER_RECORD,
 													 I2C_MEMADD_SIZE_8BIT,
 													 buffer,
-													 bufferSize,
+													 ptr - buffer,
 													 HAL_MAX_DELAY);
 		result = status == HAL_OK;
 	}
@@ -697,14 +698,14 @@ bool addReceivedRecord(const char *callsign, uint32_t frequency, uint8_t snr)
 		ptr += sizeof(frequency);
 
 		// Add SNR (1 byte)
-		*ptr = snr;
+		*ptr++ = snr;
 
 		HAL_StatusTypeDef status = HAL_I2C_Mem_Write(&hI2cExtHandler,
 													 ESP32_I2C_ADDRESS << 1,
 													 OP_RECEIVER_RECORD,
 													 I2C_MEMADD_SIZE_8BIT,
 													 buffer,
-													 bufferSize,
+													 ptr - buffer,
 													 HAL_MAX_DELAY);
 		result = status == HAL_OK;
 	}
