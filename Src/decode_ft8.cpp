@@ -158,7 +158,7 @@ int ft8_decode(void)
 					}
 				}
 
-				addReceivedRecord(call_to, freq_hz, raw_RSL);
+				addReceivedRecord(call_from, sBand_Data[BandIndex].Frequency, display_RSL);
 
 				++num_decoded;
 			}
