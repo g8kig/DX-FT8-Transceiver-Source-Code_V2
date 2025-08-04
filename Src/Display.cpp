@@ -97,10 +97,10 @@ void setup_display(void)
 								: (const uint8_t *)"Seven Band Board",
 							LEFT_MODE);
 
-	if (strlen(Station_Call) == 0 || strlen(Locator) == 0)
+	if (strlen(Station_Call) == 0 || strlen(Station_Locator) == 0)
 	{
 		char buffer[256];
-		sprintf(buffer, "Invalid Call '%s' or Locator '%s'", Station_Call, Locator);
+		sprintf(buffer, "Invalid Call '%s' or Locator '%s'", Station_Call, Station_Locator);
 		BSP_LCD_DisplayStringAt(0, 180, (const uint8_t *)buffer, LEFT_MODE);
 	}
 	else
@@ -108,7 +108,7 @@ void setup_display(void)
 		char callOrLocator[32];
 		sprintf(callOrLocator, "Call    : %s", Station_Call);
 		BSP_LCD_DisplayStringAt(33, 180, (const uint8_t *)callOrLocator, LEFT_MODE);
-		sprintf(callOrLocator, "Locator : %s", Locator);
+		sprintf(callOrLocator, "Locator : %s", Station_Locator);
 		BSP_LCD_DisplayStringAt(33, 200, (const uint8_t *)callOrLocator, LEFT_MODE);
 	}
 

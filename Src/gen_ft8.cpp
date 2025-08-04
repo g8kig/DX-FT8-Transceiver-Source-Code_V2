@@ -45,10 +45,10 @@ extern "C"
 #include "button.h"
 #include "ini.h"
 
-char Station_Call[CALLSIGN_SIZE];  // seven character call sign (e.g. 3DA0XYZ) + optional /P + null terminator
-char Locator[LOCATOR_SIZE];		   // four character locator + null terminator
-char Target_Call[CALLSIGN_SIZE];   // seven character call sign (e.g. 3DA0XYZ) + optional /P + null terminator
-char Target_Locator[LOCATOR_SIZE]; // four character locator  + null terminator
+char Station_Call[CALLSIGN_SIZE];	// seven character call sign (e.g. 3DA0XYZ) + optional /P + null terminator
+char Station_Locator[LOCATOR_SIZE]; // four character locator + null terminator
+char Target_Call[CALLSIGN_SIZE];	// seven character call sign (e.g. 3DA0XYZ) + optional /P + null terminator
+char Target_Locator[LOCATOR_SIZE];	// four character locator  + null terminator
 int Station_RSL;
 
 static uint8_t isInitialized = 0;
@@ -117,9 +117,9 @@ static int setup_locator(const char *locator_part)
 	if (locator_part != NULL)
 	{
 		size_t i = strlen(locator_part);
-		result = i > 0 && i < sizeof(Locator) ? 1 : 0;
+		result = i > 0 && i < sizeof(Station_Locator) ? 1 : 0;
 		if (result != 0)
-			set_text(Locator, locator_part, -1);
+			set_text(Station_Locator, locator_part, -1);
 	}
 	return result;
 }
@@ -154,7 +154,7 @@ extern uint8_t _ssdram; /* Symbol defined in the linker script */
 void Read_Station_File(void)
 {
 	Station_Call[0] = 0;
-	Locator[0] = 0;
+	Station_Locator[0] = 0;
 	Free_Text1[0] = 0;
 	Free_Text2[0] = 0;
 
@@ -305,7 +305,7 @@ void update_stationdata(void)
 		if (fres == FR_OK)
 		{
 			f_puts("[Station]\n", &fil2);
-			sprintf(write_buffer, "Call=%s\nLocator=%s\n", Station_Call, Locator);
+			sprintf(write_buffer, "Call=%s\nLocator=%s\n", Station_Call, Station_Locator);
 			f_puts(write_buffer, &fil2);
 			f_puts("[FreeText]\n", &fil2);
 			sprintf(write_buffer, "1=%s\n", Free_Text1);

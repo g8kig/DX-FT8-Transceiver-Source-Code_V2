@@ -370,7 +370,7 @@ static void format_tx_text(tx_msg_t id, char out[MAX_MSG_LEN])
     switch (id)
     {
     case TX1:
-        snprintf(out, MAX_MSG_LEN, "%s %s %s", Target_Call, Station_Call, Locator);
+        snprintf(out, MAX_MSG_LEN, "%s %s %s", Target_Call, Station_Call, Station_Locator);
         break;
     case TX2:
         snprintf(out, MAX_MSG_LEN, "%s %s %+d", Target_Call, Station_Call, Target_RSL);
@@ -413,7 +413,7 @@ static void format_tx_text(tx_msg_t id, char out[MAX_MSG_LEN])
             default:
                 break;
             }
-            snprintf(out, MAX_MSG_LEN, "%s %s %s", cq_str, Station_Call, Locator);
+            snprintf(out, MAX_MSG_LEN, "%s %s %s", cq_str, Station_Call, Station_Locator);
         }
         else
         {

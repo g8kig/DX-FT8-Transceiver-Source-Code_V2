@@ -266,6 +266,7 @@ int main(int argc, char *argv[])
 	logger("Main loop starting", __FILE__, __LINE__);
 
 	autoseq_init();
+	addSenderRecord(Station_Call, Station_Locator, "DX FT8 Xceiver");
 
 	while (1)
 	{
@@ -712,14 +713,14 @@ bool addReceivedRecord(const char *callsign, uint32_t frequency, uint8_t snr)
 
 bool sendRequest()
 {
-	uint8_t buffer[1] = { 0 };
+	uint8_t buffer[1] = {0};
 	HAL_StatusTypeDef status = HAL_I2C_Mem_Write(&hI2cExtHandler,
-													ESP32_I2C_ADDRESS << 1,
-													OP_SEND_REQUEST,
-													I2C_MEMADD_SIZE_8BIT,
-													buffer,
-													1,
-													HAL_MAX_DELAY);
+												 ESP32_I2C_ADDRESS << 1,
+												 OP_SEND_REQUEST,
+												 I2C_MEMADD_SIZE_8BIT,
+												 buffer,
+												 1,
+												 HAL_MAX_DELAY);
 	return status == HAL_OK;
 }
 
