@@ -93,6 +93,7 @@ static int master_decoded = 0;
 static bool worked_qsos_in_display = false;
 // Used for display RX and TX after returning from Tune
 static bool tune_pressed = false;
+static bool senderSync = false;
 
 #ifndef HOST_HAL_MOCK
 /* Private function prototypes -----------------------------------------------*/
@@ -269,7 +270,6 @@ int main(int argc, char *argv[])
 	logger("Main loop starting", __FILE__, __LINE__);
 
 	autoseq_init();
-	addSenderRecord(Station_Call, Station_Locator, "DX FT8 Transceiver");
 
 	while (1)
 	{
@@ -716,6 +716,12 @@ bool addSenderRecord(const char *callsign, const char *gridSquare, const char *s
 bool addReceivedRecord(const char *callsign, uint32_t frequency, uint8_t snr)
 {
 	bool result = false;
+	if (!senderSync)
+	{
+		addSenderRecord(Station_Call, Station_Locator, "DX FT8 Transceiver");
+		senderSync = true;
+	}
+	
 	uint8_t buffer[32];
 	size_t callsignLength = strlen(callsign);
 	size_t bufferSize = sizeof(uint8_t) + callsignLength + sizeof(uint32_t) + sizeof(uint8_t);
