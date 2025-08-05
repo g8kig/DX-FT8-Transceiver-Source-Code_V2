@@ -612,6 +612,8 @@ void logger(const char *message, const char *file, int line)
 void requestTimeSync(void)
 {
 	syncTime = true;
+	// also cause the sender information to be resent
+	senderSync = false;
 	syncTimeCounter = 0;
 }
 
