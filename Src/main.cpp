@@ -674,7 +674,7 @@ bool addSenderRecord(const char *callsign, const char *gridSquare, const char *s
 
 		// Add gridSquare as length-delimited
 		*ptr++ = gridSquareLength;
-		memcpy(ptr, callsign, gridSquareLength);
+		memcpy(ptr, gridSquare, gridSquareLength);
 		ptr += gridSquareLength;
 
 		HAL_StatusTypeDef status = HAL_I2C_Mem_Write(&hI2cExtHandler,
