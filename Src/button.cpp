@@ -1327,7 +1327,7 @@ void setup_Cal_Display(void)
 
 	show_wide(290, 55, start_freq);
 
-	syncTime = true;
+	requestTimeSync();
 
 	load_RealTime();
 	display_RTC_TimeEdit(RTC_Button - 20, RTC_line0 + 15);

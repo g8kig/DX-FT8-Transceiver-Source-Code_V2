@@ -76,7 +76,9 @@ int was_txing = 0;
 bool clr_pressed = false;
 bool free_text = false;
 bool tx_pressed = false;
-bool syncTime = true;
+static bool syncTime = true;
+static int syncTimeCounter = 0;
+static const int MAX_SYNCTIME_REQUESTS = 10;
 
 // in stm32746g_discovery.c
 extern I2C_HandleTypeDef hI2cExtHandler;
@@ -607,9 +609,15 @@ void logger(const char *message, const char *file, int line)
 	}
 }
 
+void requestTimeSync(void)
+{
+	syncTime = true;
+	syncTimeCounter = 0;
+}
+
 void updateTime(void)
 {
-	if (syncTime)
+	if (syncTime && syncTimeCounter++ < MAX_SYNCTIME_REQUESTS)
 	{
 		RTC_Time rtcTime;
 		memset(&rtcTime, 0, sizeof(rtcTime));
@@ -620,21 +628,29 @@ void updateTime(void)
 													(uint8_t *)&rtcTime,
 													sizeof(rtcTime),
 													HAL_MAX_DELAY);
-		if (status == HAL_OK && rtcTime.year > 24 && rtcTime.year < 99)
+		if (status == HAL_OK)
+		{	
+			if (rtcTime.year > 24 && rtcTime.year < 99)
+			{
+				char buffer[256];
+				sprintf(buffer, "%u %2.2u:%2.2u:%2.2u %2.2u/%2.2u/%2.2u (%u)",
+						status,
+						rtcTime.hours, rtcTime.minutes, rtcTime.seconds,
+						rtcTime.day, rtcTime.month, rtcTime.year,
+						rtcTime.dayOfWeek);
+				logger(buffer, __FILE__, __LINE__);
+
+				RTC_setTime(rtcTime.hours, rtcTime.minutes, rtcTime.seconds, 0, 0);
+				RTC_setDate(rtcTime.dayOfWeek, rtcTime.day, rtcTime.month, rtcTime.year);
+				syncTime = false;
+			}
+		}
+		else
 		{
 			char buffer[256];
-
-			syncTime = false;
-
-			sprintf(buffer, "%u %2.2u:%2.2u:%2.2u %2.2u/%2.2u/%2.2u (%u)",
-					status,
-					rtcTime.hours, rtcTime.minutes, rtcTime.seconds,
-					rtcTime.day, rtcTime.month, rtcTime.year,
-					rtcTime.dayOfWeek);
+			sprintf(buffer, "Time sync request failed: %d", status);
 			logger(buffer, __FILE__, __LINE__);
-
-			RTC_setTime(rtcTime.hours, rtcTime.minutes, rtcTime.seconds, 0, 0);
-			RTC_setDate(rtcTime.dayOfWeek, rtcTime.day, rtcTime.month, rtcTime.year);
+			syncTime = false;
 		}
 	}
 }
