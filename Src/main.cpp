@@ -116,6 +116,7 @@ enum I2COperation
 {
 	OP_TIME_REQUEST = 0,
 	OP_SENDER_RECORD,
+	OP_SENDER_SOFTWARE_RECORD,
 	OP_RECEIVER_RECORD,
 	OP_SEND_REQUEST
 };
@@ -266,7 +267,7 @@ int main(int argc, char *argv[])
 	logger("Main loop starting", __FILE__, __LINE__);
 
 	autoseq_init();
-	addSenderRecord(Station_Call, Station_Locator, "DX FT8 Xceiver");
+	addSenderRecord(Station_Call, Station_Locator, "DX FT8 Transceiver");
 
 	while (1)
 	{
@@ -644,9 +645,8 @@ bool addSenderRecord(const char *callsign, const char *gridSquare, const char *s
 	uint8_t buffer[32];
 	size_t callsignLength = strlen(callsign);
 	size_t gridSquareLength = strlen(gridSquare);
-	size_t softwareLength = strlen(software);
 
-	size_t bufferSize = sizeof(uint8_t) + callsignLength + sizeof(uint8_t) + gridSquareLength + sizeof(uint8_t) + softwareLength;
+	size_t bufferSize = sizeof(uint8_t) + callsignLength + sizeof(uint8_t) + gridSquareLength;
 	if (bufferSize < sizeof(buffer))
 	{
 		uint8_t *ptr = buffer;
@@ -661,11 +661,6 @@ bool addSenderRecord(const char *callsign, const char *gridSquare, const char *s
 		memcpy(ptr, callsign, gridSquareLength);
 		ptr += gridSquareLength;
 
-		// Add software as length-delimited
-		*ptr++ = softwareLength;
-		memcpy(ptr, software, softwareLength);
-		ptr += softwareLength;
-
 		HAL_StatusTypeDef status = HAL_I2C_Mem_Write(&hI2cExtHandler,
 													 ESP32_I2C_ADDRESS << 1,
 													 OP_SENDER_RECORD,
@@ -674,6 +669,30 @@ bool addSenderRecord(const char *callsign, const char *gridSquare, const char *s
 													 ptr - buffer,
 													 HAL_MAX_DELAY);
 		result = status == HAL_OK;
+	}
+
+	if (result)
+	{
+		size_t softwareLength = strlen(software);
+		bufferSize = sizeof(uint8_t) + softwareLength;
+		if (bufferSize < sizeof(buffer))
+		{
+			uint8_t *ptr = buffer;
+
+			// Add software description as length-delimited
+			*ptr++ = softwareLength;
+			memcpy(ptr, software, softwareLength);
+			ptr += softwareLength;
+
+			HAL_StatusTypeDef status = HAL_I2C_Mem_Write(&hI2cExtHandler,
+														 ESP32_I2C_ADDRESS << 1,
+														 OP_SENDER_SOFTWARE_RECORD,
+														 I2C_MEMADD_SIZE_8BIT,
+														 buffer,
+														 ptr - buffer,
+														 HAL_MAX_DELAY);
+			result = status == HAL_OK;
+		}
 	}
 	return result;
 }
