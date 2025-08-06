@@ -21,6 +21,7 @@
 #include "DS3231.h"
 #include "SiLabs.h"
 #include "options.h"
+#include "PskInterface.h"
 
 int Tune_On; // 0 = Receive, 1 = Xmit Tune Signal
 int Beacon_On;
