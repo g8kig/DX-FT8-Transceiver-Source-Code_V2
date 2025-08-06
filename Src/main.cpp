@@ -41,7 +41,7 @@
 #include "DS3231.h"
 #include "SiLabs.h"
 #include "options.h"
-#include "PSKInterface.h"
+#include "PskInterface.h"
 #endif
 
 #include "autoseq_engine.h"
