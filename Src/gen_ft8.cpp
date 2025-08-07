@@ -5,19 +5,19 @@
  *      Author: user
  */
 
+#include <ctype.h>
+#include <math.h>
+#include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
-#include <math.h>
-#include <ctype.h>
-#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
-#include "pack.h"
 #include "constants.h"
+#include "pack.h"
 #ifdef __cplusplus
 }
 #endif
@@ -25,33 +25,54 @@ extern "C"
 
 #include "gen_ft8.h"
 
-#include "ff.h"		/* Declarations of FatFs API */
 #include "diskio.h" /* Declarations of device I/O functions */
-#include "stm32746g_discovery_sd.h"
+#include "ff.h"		/* Declarations of FatFs API */
 #include "stm32746g_discovery.h"
+#include "stm32746g_discovery_sd.h"
 
 #include "stm32746g_discovery_lcd.h"
 
 #include "ff_gen_drv.h"
 #include "sd_diskio.h"
 
+#include "ADIF.h"
+#include "Display.h"
 #include "arm_math.h"
 #include "decode_ft8.h"
-#include "Display.h"
 #include "log_file.h"
 #include "traffic_manager.h"
-#include "ADIF.h"
 
+#include "autoseq_engine.h"
 #include "button.h"
 #include "ini.h"
-#include "autoseq_engine.h"
 
+// INI file section names
+#define INI_SECTION_STATION "Station"
+#define INI_SECTION_FREETEXT "FreeText"
+#define INI_SECTION_BANDDATA "BandData"
+#define INI_SECTION_MISC "Miscellaneous"
+#define INI_SECTION_AUTOSEQ "AutoSequence"
+
+// INI file key names
+#define INI_KEY_CALL "Call"
+#define INI_KEY_LOCATOR "Locator"
+#define INI_KEY_FREETEXT1 "1"
+#define INI_KEY_FREETEXT2 "2"
+#define INI_KEY_COMMENT "Comment"
+#define INI_KEY_MAX_TX_RETRIES "MaxTXRetries"
+
+// Default INI file content
+#define DEFAULT_INI_CONTENT "[" INI_SECTION_STATION "]\n"				\
+							INI_KEY_CALL " = \"FT8DX\"\n" 				\
+							INI_KEY_LOCATOR " = \"FN20\"\n"           	\
+							"[" INI_SECTION_AUTOSEQ "]\n" 				\
+							INI_KEY_MAX_TX_RETRIES " = 5\n"
 
 char Station_Call[CALLSIGN_SIZE];			  // seven character call sign (e.g. 3DA0XYZ) + optional /P + null terminator
-char Station_Locator_Full[LOCATOR_FULL_SIZE]; // six character locator + null terminator
-char Station_Locator[LOCATOR_SIZE];			  // four character locator + null terminator
+char Station_Locator_Full[LOCATOR_FULL_SIZE]; // six character locator + null terminator (e.g. FN20fn)
+char Station_Locator[LOCATOR_SIZE];			  // four character locator + null terminator (e.g. FN20)
 char Target_Call[CALLSIGN_SIZE];			  // seven character call sign (e.g. 3DA0XYZ) + optional /P + null terminator
-char Target_Locator[LOCATOR_SIZE];			  // four character locator  + null terminator
+char Target_Locator[LOCATOR_SIZE];			  // four character locator  + null terminator (e.g. FN20)
 int Station_RSL;
 
 static uint8_t isInitialized = 0;
@@ -61,9 +82,9 @@ static FATFS FS;
 static FIL fil2;
 static const char *ini_file_name = "StationData.ini";
 
-char Free_Text1[MESSAGE_SIZE];
-char Free_Text2[MESSAGE_SIZE];
-char Comment[MESSAGE_SIZE] = {0};
+char Free_Text1[MESSAGE_SIZE] = "Free text 1";
+char Free_Text2[MESSAGE_SIZE] = "Free text 2";
+char Comment[MESSAGE_SIZE] = "DX FT8 Transceiver";
 
 void update_stationdata(void);
 
@@ -182,26 +203,31 @@ void Read_Station_File(void)
 		{
 			ini_data_t ini_data;
 			parse_ini(read_buffer, bytes_read, &ini_data);
-			const ini_section_t *section = get_ini_section(&ini_data, "Station");
+			const ini_section_t *section =
+				get_ini_section(&ini_data, INI_SECTION_STATION);
 			if (section != NULL)
 			{
-				setup_station_call(get_ini_value_from_section(section, "Call"));
-				setup_locator(get_ini_value_from_section(section, "Locator"));
+				setup_station_call(get_ini_value_from_section(section, INI_KEY_CALL));
+				setup_locator(get_ini_value_from_section(section, INI_KEY_LOCATOR));
 			}
-			section = get_ini_section(&ini_data, "FreeText");
+			section = get_ini_section(&ini_data, INI_SECTION_FREETEXT);
 			if (section != NULL)
 			{
-				setup_free_text(get_ini_value_from_section(section, "1"), FreeText1);
-				setup_free_text(get_ini_value_from_section(section, "2"), FreeText2);
+				setup_free_text(get_ini_value_from_section(section, INI_KEY_FREETEXT1),
+								FreeText1);
+				setup_free_text(get_ini_value_from_section(section, INI_KEY_FREETEXT2),
+								FreeText2);
 			}
-			section = get_ini_section(&ini_data, "BandData");
+			section = get_ini_section(&ini_data, INI_SECTION_BANDDATA);
 			if (section != NULL)
 			{
 				// see BandIndex
-				static const char *bands[NumBands] = {"40", "30", "20", "17", "15", "12", "10"};
+				static const char *bands[NumBands] = {"40", "30", "20", "17",
+													  "15", "12", "10"};
 				for (int idx = _40M; idx <= _10M; ++idx)
 				{
-					const char *band_data = get_ini_value_from_section(section, bands[idx]);
+					const char *band_data =
+						get_ini_value_from_section(section, bands[idx]);
 					if (band_data != NULL)
 					{
 						size_t band_data_size = strlen(band_data) + 1;
@@ -213,12 +239,14 @@ void Read_Station_File(void)
 					}
 				}
 			}
-			const char *value = get_ini_value(&ini_data, "MISC", "COMMENT");
+			const char *value =
+				get_ini_value(&ini_data, INI_SECTION_MISC, INI_KEY_COMMENT);
 			if (value != NULL)
 			{
-				strcpy(Comment, (get_ini_value_from_section(section, "COMMENT")));
+				strcpy(Comment, value);
 			}
-			value = get_ini_value(&ini_data, "AutoSeq", "Max_TX_Retries");
+			value =
+				get_ini_value(&ini_data, INI_SECTION_AUTOSEQ, INI_KEY_MAX_TX_RETRIES);
 			if (value != NULL)
 			{
 				max_tx_retries = atoi(value);
@@ -239,24 +267,7 @@ void Read_Station_File(void)
 			fres = f_lseek(&fil2, 0);
 			if (fres == FR_OK)
 			{
-				f_puts("[Station]\n", &fil2);
-				f_puts("Call=FT8DX\n", &fil2);
-				f_puts("Locator=FN20\n", &fil2); // K1JT
-				f_puts("[FreeText]\n", &fil2);
-				f_puts("1=Free text 1\n", &fil2);
-				f_puts("2=Free text 2\n", &fil2);
-				f_puts("[BandData]\n", &fil2);
-				f_puts("40=7.074\n", &fil2);
-				f_puts("30=10.136\n", &fil2);
-				f_puts("20=14.074\n", &fil2);
-				f_puts("17=18.100\n", &fil2);
-				f_puts("15=21.074\n", &fil2);
-				f_puts("12=24.915\n", &fil2);
-				f_puts("10=28.074\n", &fil2);
-				f_puts("[MISC]\n", &fil2);
-				f_puts("COMMENT=DXFT8\n", &fil2);
-				f_puts("[AutoSeq]\n", &fil2);
-				f_puts("Max_TX_retries=5\n", &fil2);
+				f_puts(DEFAULT_INI_CONTENT, &fil2);
 			}
 		}
 		f_close(&fil2);
@@ -293,7 +304,8 @@ void SD_Initialize(void)
 	uint8_t result = BSP_SDRAM_Init();
 	if (result == SDRAM_ERROR)
 	{
-		BSP_LCD_DisplayStringAt(0, 100, (uint8_t *)"Failed to initialise SDRAM", LEFT_MODE);
+		BSP_LCD_DisplayStringAt(0, 100, (uint8_t *)"Failed to initialise SDRAM",
+								LEFT_MODE);
 		for (;;)
 		{
 			HAL_Delay(100);
