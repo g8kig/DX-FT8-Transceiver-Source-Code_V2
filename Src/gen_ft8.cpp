@@ -44,6 +44,8 @@ extern "C"
 
 #include "button.h"
 #include "ini.h"
+#include "autoseq_engine.h"
+
 
 char Station_Call[CALLSIGN_SIZE];			  // seven character call sign (e.g. 3DA0XYZ) + optional /P + null terminator
 char Station_Locator_Full[LOCATOR_FULL_SIZE]; // six character locator + null terminator
@@ -61,7 +63,7 @@ static const char *ini_file_name = "StationData.ini";
 
 char Free_Text1[MESSAGE_SIZE];
 char Free_Text2[MESSAGE_SIZE];
-char Comment[MESSAGE_SIZE] = {'\0'};
+char Comment[MESSAGE_SIZE] = {0};
 
 void update_stationdata(void);
 
@@ -211,10 +213,19 @@ void Read_Station_File(void)
 					}
 				}
 			}
-			section = get_ini_section(&ini_data, "MISC");
-			if (section != NULL)
+			const char *value = get_ini_value(&ini_data, "MISC", "COMMENT");
+			if (value != NULL)
 			{
 				strcpy(Comment, (get_ini_value_from_section(section, "COMMENT")));
+			}
+			value = get_ini_value(&ini_data, "AutoSeq", "Max_TX_Retries");
+			if (value != NULL)
+			{
+				max_tx_retries = atoi(value);
+				if (max_tx_retries < 1)
+					max_tx_retries = 1;
+				if (max_tx_retries > 5)
+					max_tx_retries = 5;
 			}
 
 			f_close(&fil2);
@@ -244,6 +255,8 @@ void Read_Station_File(void)
 				f_puts("10=28.074\n", &fil2);
 				f_puts("[MISC]\n", &fil2);
 				f_puts("COMMENT=DXFT8\n", &fil2);
+				f_puts("[AutoSeq]\n", &fil2);
+				f_puts("Max_TX_retries=5\n", &fil2);
 			}
 		}
 		f_close(&fil2);
