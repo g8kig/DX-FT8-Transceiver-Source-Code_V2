@@ -61,19 +61,24 @@ extern "C"
 #define INI_KEY_COMMENT "Comment"
 #define INI_KEY_MAX_TX_RETRIES "MaxTXRetries"
 
-// Default INI file content
-#define DEFAULT_INI_CONTENT "[" INI_SECTION_STATION "]\n"				\
-							INI_KEY_CALL " = \"FT8DX\"\n" 				\
-							INI_KEY_LOCATOR " = \"FN20\"\n"           	\
-							"[" INI_SECTION_AUTOSEQ "]\n" 				\
-							INI_KEY_MAX_TX_RETRIES " = 5\n"
+// INI file values
+#define INI_VALUE_FREETEXT1 "Free text 1"
+#define INI_VALUE_FREETEXT2 "Free text 2"
+#define INI_VALUE_COMMENT "DX FT8 Transceiver"
+#define INI_VALUE_MAX_TX_RETRIES 3
+#define STR_FROM_VALUE(val) #val
 
-static const char *INI_KEY_BANDS[NumBands] = {"40", "30", "20", "17","15", "12", "10"};
+// Default INI file content
+#define DEFAULT_INI_CONTENT "[" INI_SECTION_STATION "]\n" INI_KEY_CALL " = \"FT8DX\"\n" INI_KEY_LOCATOR " = \"FN20\"\n" \
+							"[" INI_SECTION_AUTOSEQ "]\n" INI_KEY_MAX_TX_RETRIES " = " STR_FROM_VALUE(INI_VALUE_MAX_TX_RETRIES) "\n"
+
+static const char *INI_KEY_BANDS[NumBands] = {"40", "30", "20", "17", "15", "12", "10"};
+static uint16_t INI_VALUE_BANDS[NumBands] = {7074, 10136, 14075, 18101, 21075, 24916, 28075};
 
 char Station_Call[CALLSIGN_SIZE];			  // seven character call sign (e.g. 3DA0XYZ) + optional /P + null terminator
 char Station_Locator_Full[LOCATOR_FULL_SIZE]; // six character locator + null terminator (e.g. FN20fn)
 char Station_Locator[LOCATOR_SIZE];			  // four character locator + null terminator (e.g. FN20)
-char Target_Call[CALLSIGN_SIZE];			  // seven character call sign (e.g. 3DA0XYZ) + optional /P + null terminator
+char Target_Call[CALLSIGN_SIZE];			  // seven character call sign (e.g. 3DA0ABC) + optional /P + null terminator
 char Target_Locator[LOCATOR_SIZE];			  // four character locator  + null terminator (e.g. FN20)
 int Station_RSL;
 
@@ -84,9 +89,10 @@ static FATFS FS;
 static FIL fil2;
 static const char *ini_file_name = "StationData.ini";
 
-char Free_Text1[MESSAGE_SIZE] = "Free text 1";
-char Free_Text2[MESSAGE_SIZE] = "Free text 2";
-char Comment[MESSAGE_SIZE] = "DX FT8 Transceiver";
+/* public */
+char Free_Text1[MESSAGE_SIZE] = INI_VALUE_FREETEXT1;
+char Free_Text2[MESSAGE_SIZE] = INI_VALUE_FREETEXT2;
+char Comment[MESSAGE_SIZE] = INI_VALUE_COMMENT;
 
 void update_stationdata(void);
 
@@ -111,9 +117,9 @@ static void set_text(char *text, const char *source, int field_id)
 
 static void validate_call()
 {
-	for (size_t i = 0; i < strlen(Station_Call); ++i)
+	for (size_t idx = 0; idx < strlen(Station_Call); ++idx)
 	{
-		if (!isprint((int)Station_Call[i]))
+		if (!isprint((int)Station_Call[idx]))
 		{
 			Station_Call[0] = 0;
 			break;
@@ -126,9 +132,9 @@ static int setup_station_call(const char *call_part)
 	int result = 0;
 	if (call_part != NULL)
 	{
-		size_t i = strlen(call_part);
-		result = i > 0 && i < sizeof(Station_Call) ? 1 : 0;
-		if (result != 0)
+		size_t idx = strlen(call_part);
+		result = idx > 0 && idx < sizeof(Station_Locator_Full);
+		if (result)
 		{
 			strcpy(Station_Call, call_part);
 			validate_call();
@@ -143,8 +149,8 @@ static int setup_locator(const char *locator_part)
 	if (locator_part != NULL)
 	{
 		size_t idx = strlen(locator_part);
-		result = idx > 0 && idx < sizeof(Station_Locator_Full) ? 1 : 0;
-		if (result != 0)
+		result = idx > 0 && idx < sizeof(Station_Locator_Full);
+		if (result)
 		{
 			set_text(Station_Locator_Full, locator_part, -1);
 			idx = LOCATOR_SIZE - 1;
@@ -160,21 +166,25 @@ static int setup_free_text(const char *free_text, int field_id)
 	int result = 0;
 	if (free_text != NULL)
 	{
-		size_t i = strlen(free_text);
+		size_t idx = strlen(free_text);
 		switch (field_id)
 		{
 		case FreeText1:
-			result = i < sizeof(Free_Text1) ? 1 : 0;
-			if (i > 0 && result != 0)
+			if (idx > 0 && idx < sizeof(Free_Text1))
+			{
 				set_text(Free_Text1, free_text, field_id);
+				result = 1;
+			}
 			break;
 		case FreeText2:
-			result = i < sizeof(Free_Text2) ? 1 : 0;
-			if (i > 0 && result != 0)
+			if (idx > 0 && idx < sizeof(Free_Text2))
+			{
 				set_text(Free_Text2, free_text, field_id);
+				result = 1;
+			}
 			break;
 		default:
-			result = 1;
+			result = 0;
 		}
 	}
 	return result;
@@ -187,8 +197,6 @@ void Read_Station_File(void)
 	Station_Call[0] = 0;
 	Station_Locator[0] = 0;
 	Station_Locator_Full[0] = 0;
-	Free_Text1[0] = 0;
-	Free_Text2[0] = 0;
 
 	f_mount(&FS, SDPath, 1);
 
@@ -206,33 +214,31 @@ void Read_Station_File(void)
 		{
 			ini_data_t ini_data;
 			parse_ini(read_buffer, bytes_read, &ini_data);
-			const ini_section_t *section =
-				get_ini_section(&ini_data, INI_SECTION_STATION);
+			const ini_section_t *section = get_ini_section(&ini_data, INI_SECTION_STATION);
 			if (section != NULL)
 			{
 				setup_station_call(get_ini_value_from_section(section, INI_KEY_CALL));
 				setup_locator(get_ini_value_from_section(section, INI_KEY_LOCATOR));
 			}
+
 			section = get_ini_section(&ini_data, INI_SECTION_FREETEXT);
 			if (section != NULL)
 			{
-				setup_free_text(get_ini_value_from_section(section, INI_KEY_FREETEXT1),
-								FreeText1);
-				setup_free_text(get_ini_value_from_section(section, INI_KEY_FREETEXT2),
-								FreeText2);
+				setup_free_text(get_ini_value_from_section(section, INI_KEY_FREETEXT1), FreeText1);
+				setup_free_text(get_ini_value_from_section(section, INI_KEY_FREETEXT2), FreeText2);
 			}
+
 			section = get_ini_section(&ini_data, INI_SECTION_BANDDATA);
 			if (section != NULL)
 			{
 				// see BandIndex
 				for (int idx = _40M; idx <= _10M; ++idx)
 				{
-					const char *band_data =
-						get_ini_value_from_section(section, INI_KEY_BANDS[idx]);
+					const char *band_data = get_ini_value_from_section(section, INI_KEY_BANDS[idx]);
 					if (band_data != NULL)
 					{
 						size_t band_data_size = strlen(band_data) + 1;
-						if (band_data_size < BAND_DATA_SIZE)
+						if (band_data_size > 0 && band_data_size < BAND_DATA_SIZE)
 						{
 							sBand_Data[idx].Frequency = (uint16_t)(atof(band_data) * 1000);
 							memcpy(sBand_Data[idx].display, band_data, band_data_size);
@@ -240,15 +246,22 @@ void Read_Station_File(void)
 					}
 				}
 			}
-			const char *value =
-				get_ini_value(&ini_data, INI_SECTION_MISC, INI_KEY_COMMENT);
-			if (value != NULL)
+
+			const char *value = get_ini_value(&ini_data, INI_SECTION_MISC, INI_KEY_COMMENT);
+			if (value != NULL && strlen(value) > 0 && strlen(value) < sizeof(Comment))
 			{
-				strcpy(Comment, value);
+				if (strcmp(value, INI_VALUE_COMMENT) != 0)
+				{
+					set_text(Comment, value, -1);
+				}
+				else
+				{
+					set_text(Comment, INI_VALUE_COMMENT, -1);
+				}
 			}
-			value =
-				get_ini_value(&ini_data, INI_SECTION_AUTOSEQ, INI_KEY_MAX_TX_RETRIES);
-			if (value != NULL)
+
+			value = get_ini_value(&ini_data, INI_SECTION_AUTOSEQ, INI_KEY_MAX_TX_RETRIES);
+			if (value != NULL && strlen(value) > 0)
 			{
 				max_tx_retries = atoi(value);
 				if (max_tx_retries < 1)
@@ -305,8 +318,7 @@ void SD_Initialize(void)
 	uint8_t result = BSP_SDRAM_Init();
 	if (result == SDRAM_ERROR)
 	{
-		BSP_LCD_DisplayStringAt(0, 100, (uint8_t *)"Failed to initialise SDRAM",
-								LEFT_MODE);
+		BSP_LCD_DisplayStringAt(0, 100, (uint8_t *)"Failed to initialise SDRAM", LEFT_MODE);
 		for (;;)
 		{
 			HAL_Delay(100);
@@ -338,20 +350,64 @@ void update_stationdata(void)
 			f_puts("[" INI_SECTION_STATION "]\n", &fil2);
 			sprintf(write_buffer, INI_KEY_CALL "=%s\n" INI_KEY_LOCATOR "=%s\n", Station_Call, Station_Locator_Full);
 			f_puts(write_buffer, &fil2);
-			f_puts("[" INI_SECTION_FREETEXT "]\n", &fil2);
-			sprintf(write_buffer, "1=%s\n", Free_Text1);
-			f_puts(write_buffer, &fil2);
-			sprintf(write_buffer, "2=%s\n", Free_Text2);
-			f_puts(write_buffer, &fil2);
-			f_puts("[" INI_SECTION_BANDDATA "]\n", &fil2);
+
+			bool freetext1_changed = strlen(Free_Text1) > 0 && strcmp(Free_Text1, INI_VALUE_FREETEXT1) != 0;
+			bool freetext2_changed = strlen(Free_Text2) > 0 && strcmp(Free_Text2, INI_VALUE_FREETEXT2) != 0;
+			if (freetext1_changed || freetext2_changed)
+			{
+				f_puts("[" INI_SECTION_FREETEXT "]\n", &fil2);
+				if (freetext1_changed)
+				{
+					sprintf(write_buffer, INI_KEY_FREETEXT1 "=%s\n", Free_Text1);
+					f_puts(write_buffer, &fil2);
+				}
+				if (freetext2_changed)
+				{
+					sprintf(write_buffer, INI_KEY_FREETEXT2 "=%s\n", Free_Text2);
+					f_puts(write_buffer, &fil2);
+				}
+			}
+
+			// detemine if band data has changed
+			bool banddata_changed = false;
 			for (int idx = _40M; idx <= _10M; ++idx)
 			{
-				sprintf(write_buffer, "%s=%u.%03u\n", INI_KEY_BANDS[idx], sBand_Data[idx].Frequency / 1000, sBand_Data[idx].Frequency % 1000);
+				if (INI_VALUE_BANDS[idx] != sBand_Data[idx].Frequency)
+				{
+					banddata_changed = true;
+					break;
+				}
+			}
+
+			// write band data if changed
+			if (banddata_changed)
+			{
+				f_puts("[" INI_SECTION_BANDDATA "]\n", &fil2);
+				for (int idx = _40M; idx <= _10M; ++idx)
+				{
+					if (INI_VALUE_BANDS[idx] == sBand_Data[idx].Frequency)
+						continue; // skip unchanged bands
+
+					sprintf(write_buffer, "%s=%u.%03u\n", INI_KEY_BANDS[idx], sBand_Data[idx].Frequency / 1000, sBand_Data[idx].Frequency % 1000);
+					f_puts(write_buffer, &fil2);
+				}
+			}
+
+			// have autosequence settings changed?
+			if (INI_VALUE_MAX_TX_RETRIES != max_tx_retries)
+			{
+				f_puts("[" INI_SECTION_AUTOSEQ "]\n", &fil2);
+				sprintf(write_buffer, INI_KEY_MAX_TX_RETRIES "=%d\n", max_tx_retries);
 				f_puts(write_buffer, &fil2);
 			}
-			f_puts("[" INI_SECTION_MISC "]\n", &fil2);
-			sprintf(write_buffer, INI_KEY_COMMENT "=\"%s\"\n", Comment);
-			f_puts(write_buffer, &fil2);
+
+			// has the comment changed?
+			if (strcmp(Comment, INI_VALUE_COMMENT) != 0)
+			{
+				f_puts("[" INI_SECTION_MISC "]\n", &fil2);
+				sprintf(write_buffer, INI_KEY_COMMENT "=\"%s\"\n", Comment);
+				f_puts(write_buffer, &fil2);
+			}
 		}
 	}
 	f_close(&fil2);
