@@ -45,10 +45,11 @@ extern "C"
 #include "button.h"
 #include "ini.h"
 
-char Station_Call[CALLSIGN_SIZE];	// seven character call sign (e.g. 3DA0XYZ) + optional /P + null terminator
-char Station_Locator[LOCATOR_SIZE]; // four character locator + null terminator
-char Target_Call[CALLSIGN_SIZE];	// seven character call sign (e.g. 3DA0XYZ) + optional /P + null terminator
-char Target_Locator[LOCATOR_SIZE];	// four character locator  + null terminator
+char Station_Call[CALLSIGN_SIZE];			  // seven character call sign (e.g. 3DA0XYZ) + optional /P + null terminator
+char Station_Locator_Full[LOCATOR_FULL_SIZE]; // six character locator + null terminator
+char Station_Locator[LOCATOR_SIZE];			  // four character locator + null terminator
+char Target_Call[CALLSIGN_SIZE];			  // seven character call sign (e.g. 3DA0XYZ) + optional /P + null terminator
+char Target_Locator[LOCATOR_SIZE];			  // four character locator  + null terminator
 int Station_RSL;
 
 static uint8_t isInitialized = 0;
@@ -117,9 +118,13 @@ static int setup_locator(const char *locator_part)
 	if (locator_part != NULL)
 	{
 		size_t i = strlen(locator_part);
-		result = i > 0 && i < sizeof(Station_Locator) ? 1 : 0;
+		result = i > 0 && i < sizeof(Station_Locator_Full) ? 1 : 0;
 		if (result != 0)
-			set_text(Station_Locator, locator_part, -1);
+		{
+			set_text(Station_Locator_Full, locator_part, -1);
+			memcpy(Station_Locator, Station_Locator_Full, LOCATOR_SIZE - 1);
+			Station_Locator[LOCATOR_SIZE - 1] = 0;
+		}
 	}
 	return result;
 }
