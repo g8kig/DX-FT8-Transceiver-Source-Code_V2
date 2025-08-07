@@ -160,6 +160,7 @@ void Read_Station_File(void)
 {
 	Station_Call[0] = 0;
 	Station_Locator[0] = 0;
+	Station_Locator_Full[0] = 0;
 	Free_Text1[0] = 0;
 	Free_Text2[0] = 0;
 
