@@ -142,13 +142,14 @@ static int setup_locator(const char *locator_part)
 	int result = 0;
 	if (locator_part != NULL)
 	{
-		size_t i = strlen(locator_part);
-		result = i > 0 && i < sizeof(Station_Locator_Full) ? 1 : 0;
+		size_t idx = strlen(locator_part);
+		result = idx > 0 && idx < sizeof(Station_Locator_Full) ? 1 : 0;
 		if (result != 0)
 		{
 			set_text(Station_Locator_Full, locator_part, -1);
-			memcpy(Station_Locator, Station_Locator_Full, LOCATOR_SIZE - 1);
-			Station_Locator[LOCATOR_SIZE - 1] = 0;
+			idx = LOCATOR_SIZE - 1;
+			memcpy(Station_Locator, Station_Locator_Full, idx);
+			Station_Locator[idx] = 0;
 		}
 	}
 	return result;
