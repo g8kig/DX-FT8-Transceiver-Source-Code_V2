@@ -68,6 +68,8 @@ extern "C"
 							"[" INI_SECTION_AUTOSEQ "]\n" 				\
 							INI_KEY_MAX_TX_RETRIES " = 5\n"
 
+static const char *INI_KEY_BANDS[NumBands] = {"40", "30", "20", "17","15", "12", "10"};
+
 char Station_Call[CALLSIGN_SIZE];			  // seven character call sign (e.g. 3DA0XYZ) + optional /P + null terminator
 char Station_Locator_Full[LOCATOR_FULL_SIZE]; // six character locator + null terminator (e.g. FN20fn)
 char Station_Locator[LOCATOR_SIZE];			  // four character locator + null terminator (e.g. FN20)
@@ -222,12 +224,10 @@ void Read_Station_File(void)
 			if (section != NULL)
 			{
 				// see BandIndex
-				static const char *bands[NumBands] = {"40", "30", "20", "17",
-													  "15", "12", "10"};
 				for (int idx = _40M; idx <= _10M; ++idx)
 				{
 					const char *band_data =
-						get_ini_value_from_section(section, bands[idx]);
+						get_ini_value_from_section(section, INI_KEY_BANDS[idx]);
 					if (band_data != NULL)
 					{
 						size_t band_data_size = strlen(band_data) + 1;
@@ -325,7 +325,6 @@ void queue_custom_text(const char *tx_msg)
 void update_stationdata(void)
 {
 	char write_buffer[64];
-	const char *bands[NumBands] = {"40", "30", "20", "17", "15", "12", "10"};
 
 	FRESULT fres = f_mount(&FS, SDPath, 1);
 	if (fres == FR_OK)
@@ -335,22 +334,22 @@ void update_stationdata(void)
 		fres = f_lseek(&fil2, 0);
 		if (fres == FR_OK)
 		{
-			f_puts("[Station]\n", &fil2);
-			sprintf(write_buffer, "Call=%s\nLocator=%s\n", Station_Call, Station_Locator);
+			f_puts("[" INI_SECTION_STATION "]\n", &fil2);
+			sprintf(write_buffer, INI_KEY_CALL "=%s\n" INI_KEY_LOCATOR "=%s\n", Station_Call, Station_Locator_Full);
 			f_puts(write_buffer, &fil2);
-			f_puts("[FreeText]\n", &fil2);
+			f_puts("[" INI_SECTION_FREETEXT "]\n", &fil2);
 			sprintf(write_buffer, "1=%s\n", Free_Text1);
 			f_puts(write_buffer, &fil2);
 			sprintf(write_buffer, "2=%s\n", Free_Text2);
 			f_puts(write_buffer, &fil2);
-			f_puts("[BandData]\n", &fil2);
+			f_puts("[" INI_SECTION_BANDDATA "]\n", &fil2);
 			for (int idx = _40M; idx <= _10M; ++idx)
 			{
-				sprintf(write_buffer, "%s=%u.%03u\n", bands[idx], sBand_Data[idx].Frequency / 1000, sBand_Data[idx].Frequency % 1000);
+				sprintf(write_buffer, "%s=%u.%03u\n", INI_KEY_BANDS[idx], sBand_Data[idx].Frequency / 1000, sBand_Data[idx].Frequency % 1000);
 				f_puts(write_buffer, &fil2);
 			}
-			f_puts("[MISC]\n", &fil2);
-			sprintf(write_buffer, "COMMENT=%s\n", Comment);
+			f_puts("[" INI_SECTION_MISC "]\n", &fil2);
+			sprintf(write_buffer, INI_KEY_COMMENT "=\"%s\"\n", Comment);
 			f_puts(write_buffer, &fil2);
 		}
 	}
