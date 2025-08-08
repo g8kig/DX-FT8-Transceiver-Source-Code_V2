@@ -72,6 +72,7 @@ extern "C"
 #define DEFAULT_INI_CONTENT "[" INI_SECTION_STATION "]\n" INI_KEY_CALL " = \"FT8DX\"\n" INI_KEY_LOCATOR " = \"FN20\"\n" \
 							"[" INI_SECTION_AUTOSEQ "]\n" INI_KEY_MAX_TX_RETRIES " = " STR_FROM_VALUE(INI_VALUE_MAX_TX_RETRIES) "\n"
 
+// same order as BandIndex enum.
 static const char *INI_KEY_BANDS[NumBands] = {"40", "30", "20", "17", "15", "12", "10"};
 static uint16_t INI_VALUE_BANDS[NumBands] = {7074, 10136, 14075, 18101, 21075, 24916, 28075};
 
@@ -94,7 +95,7 @@ char Free_Text1[MESSAGE_SIZE] = INI_VALUE_FREETEXT1;
 char Free_Text2[MESSAGE_SIZE] = INI_VALUE_FREETEXT2;
 char Comment[MESSAGE_SIZE] = INI_VALUE_COMMENT;
 
-void update_stationdata(void);
+extern uint8_t _ssdram; /* Symbol defined in the linker script */
 
 static void set_text(char *text, const char *source, int field_id)
 {
@@ -190,15 +191,14 @@ static int setup_free_text(const char *free_text, int field_id)
 	return result;
 }
 
-extern uint8_t _ssdram; /* Symbol defined in the linker script */
-
 void Read_Station_File(void)
 {
 	Station_Call[0] = 0;
 	Station_Locator[0] = 0;
 	Station_Locator_Full[0] = 0;
 
-	f_mount(&FS, SDPath, 1);
+	if (f_mount(&FS, SDPath, 1) != FR_OK)
+		return;
 
 	FILINFO filInfo;
 	memset(&filInfo, 0, sizeof(filInfo));
@@ -288,6 +288,98 @@ void Read_Station_File(void)
 	}
 }
 
+// write a key-value pair to the INI file
+static int write_ini_key_value(const char *key, const char *value) {
+    char buffer[64];
+    sprintf(buffer, "%s=%s\n", key, value);
+    return f_puts(buffer, &fil2);
+}
+
+// write a key-value pair with a numeric value to the INI file
+static int write_ini_key_value_numeric(const char *key, uint32_t value) {
+    char buffer[64];
+    sprintf(buffer, "%s=%u\n", key, value);
+    return f_puts(buffer, &fil2);
+}
+
+// write a key-value pair with a formatted numeric value to the INI file
+static int write_ini_key_value_formatted_numeric(const char *key, uint32_t value) {
+    char buffer[64];
+    sprintf(buffer, "%s=%u.%03u\n", key, value / 1000, value % 1000);
+    return f_puts(buffer, &fil2);
+}
+
+void update_stationdata(void)
+{
+    FRESULT fres = f_mount(&FS, SDPath, 1);
+    if (fres == FR_OK)
+        fres = f_open(&fil2, ini_file_name, FA_CREATE_ALWAYS | FA_WRITE);
+    if (fres == FR_OK)
+    {
+        fres = f_lseek(&fil2, 0);
+        if (fres == FR_OK)
+        {
+            f_puts("[" INI_SECTION_STATION "]\n", &fil2);
+			write_ini_key_value(INI_KEY_CALL, Station_Call);
+			write_ini_key_value(INI_KEY_LOCATOR, Station_Locator_Full);
+
+            bool freetext1_changed = strlen(Free_Text1) > 0 && strcmp(Free_Text1, INI_VALUE_FREETEXT1) != 0;
+            bool freetext2_changed = strlen(Free_Text2) > 0 && strcmp(Free_Text2, INI_VALUE_FREETEXT2) != 0;
+            if (freetext1_changed || freetext2_changed)
+            {
+                f_puts("[" INI_SECTION_FREETEXT "]\n", &fil2);
+                if (freetext1_changed)
+                {
+                    write_ini_key_value(INI_KEY_FREETEXT1, Free_Text1);
+                }
+                if (freetext2_changed)
+                {
+                    write_ini_key_value(INI_KEY_FREETEXT2, Free_Text2);
+                }
+            }
+
+            // detemine if band data has changed
+            bool banddata_changed = false;
+            for (int idx = _40M; idx <= _10M; ++idx)
+            {
+                if (INI_VALUE_BANDS[idx] != sBand_Data[idx].Frequency)
+                {
+                    banddata_changed = true;
+                    break;
+                }
+            }
+
+            // write band data if changed
+            if (banddata_changed)
+            {
+                f_puts("[" INI_SECTION_BANDDATA "]\n", &fil2);
+                for (int idx = _40M; idx <= _10M; ++idx)
+                {
+                    if (INI_VALUE_BANDS[idx] == sBand_Data[idx].Frequency)
+                        continue; // skip unchanged bands
+
+                    write_ini_key_value_formatted_numeric(INI_KEY_BANDS[idx], sBand_Data[idx].Frequency);
+                }
+            }
+
+            // have autosequence settings changed?
+            if (INI_VALUE_MAX_TX_RETRIES != max_tx_retries)
+            {
+                f_puts("[" INI_SECTION_AUTOSEQ "]\n", &fil2);
+                write_ini_key_value_numeric(INI_KEY_MAX_TX_RETRIES, max_tx_retries);
+            }
+
+            // has the comment changed?
+            if (strcmp(Comment, INI_VALUE_COMMENT) != 0)
+            {
+                f_puts("[" INI_SECTION_MISC "]\n", &fil2);
+                write_ini_key_value(INI_KEY_COMMENT, Comment);
+            }
+        }
+    }
+    f_close(&fil2);
+}
+
 void SD_Initialize(void)
 {
 	BSP_LCD_SetTextColor(LCD_COLOR_BLACK);
@@ -333,82 +425,4 @@ void queue_custom_text(const char *tx_msg)
 
 	pack77(tx_msg, packed);
 	genft8(packed, tones);
-}
-
-void update_stationdata(void)
-{
-	char write_buffer[64];
-
-	FRESULT fres = f_mount(&FS, SDPath, 1);
-	if (fres == FR_OK)
-		fres = f_open(&fil2, ini_file_name, FA_CREATE_ALWAYS | FA_WRITE);
-	if (fres == FR_OK)
-	{
-		fres = f_lseek(&fil2, 0);
-		if (fres == FR_OK)
-		{
-			f_puts("[" INI_SECTION_STATION "]\n", &fil2);
-			sprintf(write_buffer, INI_KEY_CALL "=%s\n" INI_KEY_LOCATOR "=%s\n", Station_Call, Station_Locator_Full);
-			f_puts(write_buffer, &fil2);
-
-			bool freetext1_changed = strlen(Free_Text1) > 0 && strcmp(Free_Text1, INI_VALUE_FREETEXT1) != 0;
-			bool freetext2_changed = strlen(Free_Text2) > 0 && strcmp(Free_Text2, INI_VALUE_FREETEXT2) != 0;
-			if (freetext1_changed || freetext2_changed)
-			{
-				f_puts("[" INI_SECTION_FREETEXT "]\n", &fil2);
-				if (freetext1_changed)
-				{
-					sprintf(write_buffer, INI_KEY_FREETEXT1 "=%s\n", Free_Text1);
-					f_puts(write_buffer, &fil2);
-				}
-				if (freetext2_changed)
-				{
-					sprintf(write_buffer, INI_KEY_FREETEXT2 "=%s\n", Free_Text2);
-					f_puts(write_buffer, &fil2);
-				}
-			}
-
-			// detemine if band data has changed
-			bool banddata_changed = false;
-			for (int idx = _40M; idx <= _10M; ++idx)
-			{
-				if (INI_VALUE_BANDS[idx] != sBand_Data[idx].Frequency)
-				{
-					banddata_changed = true;
-					break;
-				}
-			}
-
-			// write band data if changed
-			if (banddata_changed)
-			{
-				f_puts("[" INI_SECTION_BANDDATA "]\n", &fil2);
-				for (int idx = _40M; idx <= _10M; ++idx)
-				{
-					if (INI_VALUE_BANDS[idx] == sBand_Data[idx].Frequency)
-						continue; // skip unchanged bands
-
-					sprintf(write_buffer, "%s=%u.%03u\n", INI_KEY_BANDS[idx], sBand_Data[idx].Frequency / 1000, sBand_Data[idx].Frequency % 1000);
-					f_puts(write_buffer, &fil2);
-				}
-			}
-
-			// have autosequence settings changed?
-			if (INI_VALUE_MAX_TX_RETRIES != max_tx_retries)
-			{
-				f_puts("[" INI_SECTION_AUTOSEQ "]\n", &fil2);
-				sprintf(write_buffer, INI_KEY_MAX_TX_RETRIES "=%d\n", max_tx_retries);
-				f_puts(write_buffer, &fil2);
-			}
-
-			// has the comment changed?
-			if (strcmp(Comment, INI_VALUE_COMMENT) != 0)
-			{
-				f_puts("[" INI_SECTION_MISC "]\n", &fil2);
-				sprintf(write_buffer, INI_KEY_COMMENT "=\"%s\"\n", Comment);
-				f_puts(write_buffer, &fil2);
-			}
-		}
-	}
-	f_close(&fil2);
 }
