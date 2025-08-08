@@ -97,7 +97,7 @@ void setup_display(void)
 								: (const uint8_t *)"Seven Band Board",
 							LEFT_MODE);
 
-	if (strlen(Station_Call) == 0 || strlen(Station_Locator) == 0)
+	if (strlen(Station_Call) == 0 || strlen(Station_Locator_Full) == 0)
 	{
 		char buffer[256];
 		sprintf(buffer, "Invalid Call '%s' or Locator '%s'", Station_Call, Station_Locator_Full);

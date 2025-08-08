@@ -38,7 +38,7 @@ int Logging_State;
 int Free_Index = 0;
 int AGC_Gain = 20;
 
-char EditingText[MESSAGE_SIZE] = {0};
+static char EditingText[MESSAGE_SIZE] = {0};
 
 char display_frequency[BAND_DATA_SIZE] = "14.075";
 static const char *Logging_On = " On";
@@ -514,7 +514,7 @@ ButtonStruct sButtonData[NumButtons] = {
 	 /*Active*/ 1,
 	 /*Displayed*/ 1,
 	 /*state*/ 0,
-	 /*x*/ 390,
+	 /*x*/ 400,
 	 /*y*/ SETUP_line3,
 	 /*w*/ 110,
 	 /*h*/ 30},
@@ -532,8 +532,8 @@ ButtonStruct sButtonData[NumButtons] = {
 	 /*h*/ 30},
 
 	{// button Grid
-	 /*text0*/ Station_Locator,
-	 /*text1*/ Station_Locator,
+	 /*text0*/ Station_Locator_Full,
+	 /*text1*/ Station_Locator_Full,
 	 /*blank*/ "    ",
 	 /*Active*/ 1,
 	 /*Displayed*/ 1,
@@ -969,7 +969,7 @@ void executeButton(uint16_t index)
 	case EditGrid:
 		if (sButtonData[EditGrid].state == 1)
 		{
-			strcpy(EditingText, Station_Locator);
+			strcpy(EditingText, Station_Locator_Full);
 			sButtonData[EditingWindow].text0 = EditingText;
 			EnableKeyboard();
 			for (int i = EditCall; i < EditingWindow; i++)
@@ -978,8 +978,8 @@ void executeButton(uint16_t index)
 		}
 		else
 		{
-			strcpy(Station_Locator, EditingText);
-			sButtonData[Grid].text0 = Station_Locator;
+			strcpy(Station_Locator_Full, EditingText);
+			sButtonData[Grid].text0 = Station_Locator_Full;
 			DisableKeyboard();
 			update_stationdata();
 		}
