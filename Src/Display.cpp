@@ -88,7 +88,7 @@ void setup_display(void)
 
 	BSP_LCD_DisplayStringAt(0, 60, (const uint8_t *)"DX FT8: A FT8 Xceiver", LEFT_MODE);
 	BSP_LCD_DisplayStringAt(33, 80, (const uint8_t *)"Hardware: V2.0", LEFT_MODE);
-	BSP_LCD_DisplayStringAt(33, 100, (const uint8_t *)"Firmware: V2.0.0", LEFT_MODE);
+	BSP_LCD_DisplayStringAt(33, 100, (const uint8_t *)"Firmware: V2.1.0", LEFT_MODE);
 	BSP_LCD_DisplayStringAt(33, 120, (const uint8_t *)"W5BAA - WB2CBA", LEFT_MODE);
 
 	BSP_LCD_DisplayStringAt(33, 160,
@@ -100,7 +100,7 @@ void setup_display(void)
 	if (strlen(Station_Call) == 0 || strlen(Station_Locator) == 0)
 	{
 		char buffer[256];
-		sprintf(buffer, "Invalid Call '%s' or Locator '%s'", Station_Call, Station_Locator);
+		sprintf(buffer, "Invalid Call '%s' or Locator '%s'", Station_Call, Station_Locator_Full);
 		BSP_LCD_DisplayStringAt(0, 180, (const uint8_t *)buffer, LEFT_MODE);
 	}
 	else
@@ -108,7 +108,7 @@ void setup_display(void)
 		char callOrLocator[32];
 		sprintf(callOrLocator, "Call    : %s", Station_Call);
 		BSP_LCD_DisplayStringAt(33, 180, (const uint8_t *)callOrLocator, LEFT_MODE);
-		sprintf(callOrLocator, "Locator : %s", Station_Locator);
+		sprintf(callOrLocator, "Locator : %s", Station_Locator_Full);
 		BSP_LCD_DisplayStringAt(33, 200, (const uint8_t *)callOrLocator, LEFT_MODE);
 	}
 
