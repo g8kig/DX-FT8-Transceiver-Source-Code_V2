@@ -75,7 +75,7 @@ extern "C"
 
 // same order as BandIndex enum.
 static const char *INI_KEY_BANDS[NumBands] = {"40", "30", "20", "17", "15", "12", "10"};
-static uint16_t INI_VALUE_BANDS[NumBands] = {7074, 10136, 14075, 18101, 21075, 24916, 28075};
+static uint16_t INI_VALUE_BANDS[NumBands] = {7074, 10136, 14074, 18100, 21074, 24915, 28074};
 
 char Station_Call[CALLSIGN_SIZE];			  // seven character call sign (e.g. 3DA0XYZ) + optional /P + null terminator
 char Station_Locator_Full[LOCATOR_FULL_SIZE]; // six character locator + null terminator (e.g. FN20fn)
@@ -256,8 +256,11 @@ void Read_Station_File(void)
 						size_t band_data_size = strlen(band_data) + 1;
 						if (band_data_size > 0 && band_data_size < BAND_DATA_SIZE)
 						{
-							sBand_Data[idx].Frequency = (uint16_t)(atof(band_data) * 1000);
-							memcpy(sBand_Data[idx].display, band_data, band_data_size);
+							char buffer[BAND_DATA_SIZE];
+							unsigned frequency = (unsigned)(atoi(band_data));
+							sprintf(buffer, "%u.%03u\n", frequency / 1000, frequency % 1000);
+							memcpy(sBand_Data[idx].display, buffer, BAND_DATA_SIZE);
+							sBand_Data[idx].Frequency = (uint16_t)frequency;
 						}
 					}
 				}
@@ -279,6 +282,11 @@ void Read_Station_File(void)
 				if (max_tx_retries > 5)
 					max_tx_retries = 5;
 			}
+			else
+			{
+				max_tx_retries = INI_VALUE_MAX_TX_RETRIES;
+			}
+		
 
 			f_close(&fil2);
 		}
@@ -310,17 +318,10 @@ static int write_ini_key_value(const char *key, const char *value)
 static int write_ini_key_value_numeric(const char *key, uint32_t value)
 {
 	char buffer[64];
-	sprintf(buffer, "%s=%u\n", key, value);
+	sprintf(buffer, "%s=%u\n", key, (unsigned)value);
 	return f_puts(buffer, &fil2);
 }
 
-// write a key-value pair with a formatted numeric value to the INI file
-static int write_ini_key_value_formatted_numeric(const char *key, uint32_t value)
-{
-	char buffer[64];
-	sprintf(buffer, "%s=%u.%03u\n", key, value / 1000, value % 1000);
-	return f_puts(buffer, &fil2);
-}
 
 void update_stationdata(void)
 {
@@ -377,10 +378,14 @@ void update_stationdata(void)
 				f_puts("[" INI_SECTION_BANDDATA "]\n", &fil2);
 				for (int idx = _40M; idx <= _10M; ++idx)
 				{
-					if (INI_VALUE_BANDS[idx] == sBand_Data[idx].Frequency)
-						continue; // skip unchanged bands
+					if (INI_VALUE_BANDS[idx] != sBand_Data[idx].Frequency)
+					{
+						char buffer[256];
+						sprintf(buffer, "%s: %u=%u", INI_KEY_BANDS[idx], INI_VALUE_BANDS[idx], sBand_Data[idx].Frequency);
+						logger(buffer, __FILE__, __LINE__);
 
-					write_ini_key_value_formatted_numeric(INI_KEY_BANDS[idx], sBand_Data[idx].Frequency);
+						write_ini_key_value_numeric(INI_KEY_BANDS[idx], sBand_Data[idx].Frequency);
+					}
 				}
 			}
 
