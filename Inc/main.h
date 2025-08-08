@@ -31,13 +31,8 @@ extern bool tx_pressed;
 extern bool free_text;
 
 extern const char *test_data_file;
-extern bool syncTime;
 
 void logger(const char *message, const char* file, int line);
-void updateTime(void);
-bool addSenderRecord(const char *callsign, const char *gridSquare, const char *software);
-bool addReceivedRecord(const char *callsign, uint32_t frequency, uint8_t snr);
-bool sendRequest();
 
 #endif /* __MAIN_H */
 

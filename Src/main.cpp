@@ -27,23 +27,21 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+
 #ifndef HOST_HAL_MOCK
 #include "stm32f7xx_hal_rcc.h"
 #include "stm32746g_discovery_ts.h"
 #include "stm32746g_discovery_lcd.h"
 #include "stm32f7xx_hal_tim.h"
 #include "arm_math.h"
-
 #include "SDR_Audio.h"
 #include "Process_DSP.h"
 #include "Codec_Gains.h"
 #include "button.h"
-
 #include "DS3231.h"
-
 #include "SiLabs.h"
-
 #include "options.h"
+#include "PskInterface.h"
 #endif
 
 #include "autoseq_engine.h"
@@ -76,10 +74,8 @@ int was_txing = 0;
 bool clr_pressed = false;
 bool free_text = false;
 bool tx_pressed = false;
-bool syncTime = true;
 
-// in stm32746g_discovery.c
-extern I2C_HandleTypeDef hI2cExtHandler;
+static UART_HandleTypeDef s_UART1Handle = UART_HandleTypeDef();
 
 // Autoseq TX text buffer
 static char autoseq_txbuf[MAX_MSG_LEN];
@@ -99,29 +95,6 @@ static void Error_Handler(void);
 static void CPU_CACHE_Enable(void);
 static void InitialiseDisplay(void);
 static bool Initialise_Serial();
-
-static UART_HandleTypeDef s_UART1Handle = UART_HandleTypeDef();
-struct RTC_Time
-{
-	uint8_t seconds; // 00-59 in BCD
-	uint8_t minutes; // 00-59 in BCD
-	uint8_t hours;	 // 00-23 in BCD
-	uint8_t dayOfWeek;
-	uint8_t day;
-	uint8_t month;
-	uint8_t year;
-};
-
-enum I2COperation
-{
-	OP_TIME_REQUEST = 0,
-	OP_SENDER_RECORD,
-	OP_RECEIVER_RECORD,
-	OP_SEND_REQUEST
-};
-
-static const uint8_t ESP32_I2C_ADDRESS = 0x2A;
-
 #endif
 
 // Helper function for updating TX region display
@@ -603,124 +576,6 @@ void logger(const char *message, const char *file, int line)
 	{
 		HAL_UART_Transmit(&s_UART1Handle, (uint8_t *)buffer, strlen(buffer), HAL_MAX_DELAY);
 	}
-}
-
-void updateTime(void)
-{
-	if (syncTime)
-	{
-		RTC_Time rtcTime;
-		memset(&rtcTime, 0, sizeof(rtcTime));
-		HAL_StatusTypeDef status = HAL_I2C_Mem_Read(&hI2cExtHandler,
-													ESP32_I2C_ADDRESS << 1,
-													OP_TIME_REQUEST,
-													I2C_MEMADD_SIZE_8BIT,
-													(uint8_t *)&rtcTime,
-													sizeof(rtcTime),
-													HAL_MAX_DELAY);
-		if (status == HAL_OK && rtcTime.year > 24 && rtcTime.year < 99)
-		{
-			char buffer[256];
-
-			syncTime = false;
-
-			sprintf(buffer, "%u %2.2u:%2.2u:%2.2u %2.2u/%2.2u/%2.2u (%u)",
-					status,
-					rtcTime.hours, rtcTime.minutes, rtcTime.seconds,
-					rtcTime.day, rtcTime.month, rtcTime.year,
-					rtcTime.dayOfWeek);
-			logger(buffer, __FILE__, __LINE__);
-
-			RTC_setTime(rtcTime.hours, rtcTime.minutes, rtcTime.seconds, 0, 0);
-			RTC_setDate(rtcTime.dayOfWeek, rtcTime.day, rtcTime.month, rtcTime.year);
-		}
-	}
-}
-
-bool addSenderRecord(const char *callsign, const char *gridSquare, const char *software)
-{
-	bool result = false;
-	uint8_t buffer[32];
-	size_t callsignLength = strlen(callsign);
-	size_t gridSquareLength = strlen(gridSquare);
-	size_t softwareLength = strlen(software);
-
-	size_t bufferSize = sizeof(uint8_t) + callsignLength + sizeof(uint8_t) + gridSquareLength + sizeof(uint8_t) + softwareLength;
-	if (bufferSize < sizeof(buffer))
-	{
-		uint8_t *ptr = buffer;
-
-		// Add callsign as length-delimited
-		*ptr++ = callsignLength;
-		memcpy(ptr, callsign, callsignLength);
-		ptr += callsignLength;
-
-		// Add gridSquare as length-delimited
-		*ptr++ = gridSquareLength;
-		memcpy(ptr, callsign, gridSquareLength);
-		ptr += gridSquareLength;
-
-		// Add software as length-delimited
-		*ptr++ = softwareLength;
-		memcpy(ptr, software, softwareLength);
-
-		HAL_StatusTypeDef status = HAL_I2C_Mem_Write(&hI2cExtHandler,
-													 ESP32_I2C_ADDRESS << 1,
-													 OP_SENDER_RECORD,
-													 I2C_MEMADD_SIZE_8BIT,
-													 buffer,
-													 bufferSize,
-													 HAL_MAX_DELAY);
-		result = status == HAL_OK;
-	}
-	return result;
-}
-
-bool addReceivedRecord(const char *callsign, uint32_t frequency, uint8_t snr)
-{
-	bool result = false;
-	uint8_t buffer[32];
-	size_t callsignLength = strlen(callsign);
-	size_t bufferSize = sizeof(uint8_t) + callsignLength + sizeof(uint32_t) + sizeof(uint8_t);
-	if (bufferSize < sizeof(buffer))
-	{
-		uint8_t *ptr = buffer;
-
-		// Add callsign as length-delimited
-		*ptr++ = callsignLength;
-		memcpy(ptr, callsign, callsignLength);
-		ptr += callsignLength;
-
-		// Add frequency
-		memcpy(ptr, &frequency, sizeof(frequency));
-		ptr += sizeof(frequency);
-
-		// Add SNR (1 byte)
-		*ptr = snr;
-
-		HAL_StatusTypeDef status = HAL_I2C_Mem_Write(&hI2cExtHandler,
-													 ESP32_I2C_ADDRESS << 1,
-													 OP_RECEIVER_RECORD,
-													 I2C_MEMADD_SIZE_8BIT,
-													 buffer,
-													 bufferSize,
-													 HAL_MAX_DELAY);
-		result = status == HAL_OK;
-	}
-	return result;
-}
-
-bool sendRequest()
-{
-	uint8_t buffer[1] = { 0 };
-	HAL_StatusTypeDef status = HAL_I2C_Mem_Write(&hI2cExtHandler,
-													ESP32_I2C_ADDRESS << 1,
-													OP_SEND_REQUEST,
-													I2C_MEMADD_SIZE_8BIT,
-													buffer,
-													1,
-													HAL_MAX_DELAY);
-	return status == HAL_OK;
 }
 
 #endif

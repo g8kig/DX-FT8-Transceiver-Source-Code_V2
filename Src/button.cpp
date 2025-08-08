@@ -21,6 +21,7 @@
 #include "DS3231.h"
 #include "SiLabs.h"
 #include "options.h"
+#include "PskInterface.h"
 
 int Tune_On; // 0 = Receive, 1 = Xmit Tune Signal
 int Beacon_On;
@@ -531,8 +532,8 @@ ButtonStruct sButtonData[NumButtons] = {
 	 /*h*/ 30},
 
 	{// button Grid
-	 /*text0*/ Locator,
-	 /*text1*/ Locator,
+	 /*text0*/ Station_Locator,
+	 /*text1*/ Station_Locator,
 	 /*blank*/ "    ",
 	 /*Active*/ 1,
 	 /*Displayed*/ 1,
@@ -968,7 +969,7 @@ void executeButton(uint16_t index)
 	case EditGrid:
 		if (sButtonData[EditGrid].state == 1)
 		{
-			strcpy(EditingText, Locator);
+			strcpy(EditingText, Station_Locator);
 			sButtonData[EditingWindow].text0 = EditingText;
 			EnableKeyboard();
 			for (int i = EditCall; i < EditingWindow; i++)
@@ -977,8 +978,8 @@ void executeButton(uint16_t index)
 		}
 		else
 		{
-			strcpy(Locator, EditingText);
-			sButtonData[Grid].text0 = Locator;
+			strcpy(Station_Locator, EditingText);
+			sButtonData[Grid].text0 = Station_Locator;
 			DisableKeyboard();
 			update_stationdata();
 		}
@@ -1327,7 +1328,7 @@ void setup_Cal_Display(void)
 
 	show_wide(290, 55, start_freq);
 
-	syncTime = true;
+	requestTimeSync();
 
 	load_RealTime();
 	display_RTC_TimeEdit(RTC_Button - 20, RTC_line0 + 15);

@@ -33,6 +33,7 @@ extern "C"
 #include "decode_ft8.h"
 #include "ADIF.h"
 #include "DS3231.h"
+#include "PskInterface.h"
 
 /* For DECENDING order. Returns −1 if (a) > (b), 0 if equal, +1 if (a) < (b) */
 #define CMP(a, b) (((a) < (b)) - ((a) > (b)))
@@ -138,7 +139,7 @@ int ft8_decode(void)
 				new_decoded[num_decoded].snr = display_RSL;
 
 				new_decoded[num_decoded].sequence = Seq_RSL;
-				if (validate_locator(locator) == 1)
+				if (validate_locator(locator))
 				{
 					strcpy(new_decoded[num_decoded].target_locator, locator);
 					new_decoded[num_decoded].sequence = Seq_Locator;
@@ -158,6 +159,12 @@ int ft8_decode(void)
 					}
 				}
 
+				// Ignore hashed callsigns
+				if (*call_from != '<')
+				{
+					uint32_t frequency = (sBand_Data[BandIndex].Frequency * 1000) + new_decoded[num_decoded].freq_hz;
+					addReceivedRecord(call_from, frequency, display_RSL);
+				}
 				++num_decoded;
 			}
 		}
@@ -225,10 +232,7 @@ static int validate_locator(const char locator[])
 	if (N2 <= 9)
 		test++;
 
-	if (test == 4)
-		return 1;
-	else
-		return 0;
+	return (test == 4);
 }
 
 void process_selected_Station(int num_decoded, int TouchIndex)
