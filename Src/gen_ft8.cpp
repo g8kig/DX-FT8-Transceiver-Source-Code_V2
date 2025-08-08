@@ -191,7 +191,7 @@ static int setup_free_text(const char *free_text, int field_id)
 	return result;
 }
 
-static set_comment(const char *comment)
+static void set_comment(const char *comment)
 {
 	if (comment != NULL && strlen(comment) > 0 && strlen(comment) < sizeof(Comment))
 	{
