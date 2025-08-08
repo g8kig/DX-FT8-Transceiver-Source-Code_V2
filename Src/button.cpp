@@ -931,7 +931,6 @@ void executeButton(uint16_t index)
 		drawButton(LoggingMsg);
 		sButtonData[LoggingOnOff].state = Logging_State;
 		drawButton(LoggingOnOff);
-		logger("Logging state changed", __FILE__, __LINE__);
 		break;
 
 	case SkipTx1:

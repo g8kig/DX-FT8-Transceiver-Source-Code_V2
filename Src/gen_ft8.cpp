@@ -286,7 +286,6 @@ void Read_Station_File(void)
 			{
 				max_tx_retries = INI_VALUE_MAX_TX_RETRIES;
 			}
-		
 
 			f_close(&fil2);
 		}
@@ -322,7 +321,6 @@ static int write_ini_key_value_numeric(const char *key, uint32_t value)
 	return f_puts(buffer, &fil2);
 }
 
-
 void update_stationdata(void)
 {
 	FRESULT fres = f_mount(&FS, SDPath, 1);
@@ -336,12 +334,12 @@ void update_stationdata(void)
 			f_puts("[" INI_SECTION_STATION "]\n", &fil2);
 			write_ini_key_value(INI_KEY_CALL, Station_Call);
 
-			memcpy(Station_Locator, Station_Locator_Full, LOCATOR_SIZE-1);
-			Station_Locator[LOCATOR_SIZE-1] = 0;
+			memcpy(Station_Locator, Station_Locator_Full, LOCATOR_SIZE - 1);
+			Station_Locator[LOCATOR_SIZE - 1] = 0;
 
 			if (strlen(Station_Locator_Full) > LOCATOR_SIZE)
 			{
-				Station_Locator_Full[LOCATOR_SIZE-1] = tolower(Station_Locator_Full[LOCATOR_SIZE-1]);
+				Station_Locator_Full[LOCATOR_SIZE - 1] = tolower(Station_Locator_Full[LOCATOR_SIZE - 1]);
 				Station_Locator_Full[LOCATOR_SIZE] = tolower(Station_Locator_Full[LOCATOR_SIZE]);
 			}
 			write_ini_key_value(INI_KEY_LOCATOR, Station_Locator_Full);
@@ -380,10 +378,6 @@ void update_stationdata(void)
 				{
 					if (INI_VALUE_BANDS[idx] != sBand_Data[idx].Frequency)
 					{
-						char buffer[256];
-						sprintf(buffer, "%s: %u=%u", INI_KEY_BANDS[idx], INI_VALUE_BANDS[idx], sBand_Data[idx].Frequency);
-						logger(buffer, __FILE__, __LINE__);
-
 						write_ini_key_value_numeric(INI_KEY_BANDS[idx], sBand_Data[idx].Frequency);
 					}
 				}
