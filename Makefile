@@ -204,7 +204,7 @@ TARGET = Katy.elf
 
 .PHONY: all clean flash
 
-all: $(OBJDIR) $(TARGET) Katy.hex Katy.list
+all: $(OBJDIR) $(TARGET) Katy.hex Katy.bin Katy.list
 
 $(OBJDIR):
 	mkdir -p $(OBJDIR)
@@ -227,17 +227,18 @@ $(TARGET): $(OBJS)
 Katy.hex: $(TARGET)
 	$(OBJCOPY) -O ihex $(TARGET) $@
 
+Katy.bin: $(TARGET)
+	$(OBJCOPY) -O binary $(TARGET) Katy.bin
+
 Katy.list: $(TARGET)
 	$(OBJDUMP) -h -S $(TARGET) > $@
 	$(SIZE) $(TARGET)
 
-flash: $(TARGET)
-	$(OBJCOPY) -O binary $(TARGET) Katy.bin
+flash: Katy.bin
 	st-info --probe
 	st-flash --reset write Katy.bin 0x08000000
-	rm -f Katy.bin
 
 clean:
-	rm -f $(OBJS) $(TARGET) Katy.hex Katy.list
+	rm -f $(OBJS) $(TARGET) Katy.hex Katy.list Katy.bin
 	rm -rf $(OBJDIR)
 

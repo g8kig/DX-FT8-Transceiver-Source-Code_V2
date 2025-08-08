@@ -66,11 +66,12 @@ extern "C"
 #define INI_VALUE_FREETEXT2 "Free text 2"
 #define INI_VALUE_COMMENT "DX FT8 Transceiver"
 #define INI_VALUE_MAX_TX_RETRIES 3
-#define STR_FROM_VALUE(val) #val
+#define STRINGIFY_HELPER(x) #x
+#define STRINGIFY(x) STRINGIFY_HELPER(x)
 
 // Default INI file content
-#define DEFAULT_INI_CONTENT "[" INI_SECTION_STATION "]\n" INI_KEY_CALL " = \"FT8DX\"\n" INI_KEY_LOCATOR " = \"FN20\"\n" \
-							"[" INI_SECTION_AUTOSEQ "]\n" INI_KEY_MAX_TX_RETRIES " = " STR_FROM_VALUE(INI_VALUE_MAX_TX_RETRIES) "\n"
+#define DEFAULT_INI_CONTENT "[" INI_SECTION_STATION "]\n" INI_KEY_CALL "=FT8DX\n" INI_KEY_LOCATOR "=FN20\n" \
+							"[" INI_SECTION_AUTOSEQ "]\n" INI_KEY_MAX_TX_RETRIES "=" STRINGIFY(INI_VALUE_MAX_TX_RETRIES) "\n"
 
 // same order as BandIndex enum.
 static const char *INI_KEY_BANDS[NumBands] = {"40", "30", "20", "17", "15", "12", "10"};
@@ -333,6 +334,15 @@ void update_stationdata(void)
 		{
 			f_puts("[" INI_SECTION_STATION "]\n", &fil2);
 			write_ini_key_value(INI_KEY_CALL, Station_Call);
+
+			memcpy(Station_Locator, Station_Locator_Full, LOCATOR_SIZE-1);
+			Station_Locator[LOCATOR_SIZE-1] = 0;
+
+			if (strlen(Station_Locator_Full) > LOCATOR_SIZE)
+			{
+				Station_Locator_Full[LOCATOR_SIZE-1] = tolower(Station_Locator_Full[LOCATOR_SIZE-1]);
+				Station_Locator_Full[LOCATOR_SIZE] = tolower(Station_Locator_Full[LOCATOR_SIZE]);
+			}
 			write_ini_key_value(INI_KEY_LOCATOR, Station_Locator_Full);
 
 			bool freetext1_changed = strlen(Free_Text1) > 0 && strcmp(Free_Text1, INI_VALUE_FREETEXT1) != 0;
