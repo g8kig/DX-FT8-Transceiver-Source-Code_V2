@@ -408,7 +408,7 @@ void update_stationdata(void)
 				}
 				if (software_changed)
 				{
-					write_ini_key_value(INI_VALUE_SOFTWARE, Software);
+					write_ini_key_value(INI_KEY_SOFTWARE, Software);
 				}
 			}
 		}
