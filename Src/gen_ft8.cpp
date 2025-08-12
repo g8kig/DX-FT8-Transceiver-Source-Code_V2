@@ -65,8 +65,8 @@ extern "C"
 // INI file values
 #define INI_VALUE_FREETEXT1 "Free text 1"
 #define INI_VALUE_FREETEXT2 "Free text 2"
-#define INI_VALUE_COMMENT "FT8DX"
-#define INI_VALUE_SOFTWARE "FT8 DX Transceiver"
+#define INI_VALUE_COMMENT "DXFT8"
+#define INI_VALUE_SOFTWARE "DX FT8 Transceiver"
 #define INI_VALUE_MAX_TX_RETRIES 3
 #define STRINGIFY_HELPER(x) #x
 #define STRINGIFY(x) STRINGIFY_HELPER(x)
