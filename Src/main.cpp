@@ -236,8 +236,6 @@ int main(int argc, char *argv[])
 	}
 #endif
 
-	logger("Main loop starting", __FILE__, __LINE__);
-
 	autoseq_init();
 
 	while (1)

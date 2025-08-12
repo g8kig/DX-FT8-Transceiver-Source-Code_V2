@@ -59,18 +59,21 @@ extern "C"
 #define INI_KEY_FREETEXT1 "1"
 #define INI_KEY_FREETEXT2 "2"
 #define INI_KEY_COMMENT "Comment"
+#define INI_KEY_SOFTWARE "Software"
 #define INI_KEY_MAX_TX_RETRIES "MaxTXRetries"
 
 // INI file values
 #define INI_VALUE_FREETEXT1 "Free text 1"
 #define INI_VALUE_FREETEXT2 "Free text 2"
-#define INI_VALUE_COMMENT "DX FT8 Transceiver"
+#define INI_VALUE_COMMENT "DXFT8"
+#define INI_VALUE_SOFTWARE "DX FT8 Transceiver"
+#define INI_VALUE_LOCATOR "FN20"
 #define INI_VALUE_MAX_TX_RETRIES 3
 #define STRINGIFY_HELPER(x) #x
 #define STRINGIFY(x) STRINGIFY_HELPER(x)
 
 // Default INI file content
-#define DEFAULT_INI_CONTENT "[" INI_SECTION_STATION "]\n" INI_KEY_CALL "=FT8DX\n" INI_KEY_LOCATOR "=FN20\n" \
+#define DEFAULT_INI_CONTENT "[" INI_SECTION_STATION "]\n" INI_KEY_CALL "=" INI_VALUE_COMMENT "\n" INI_KEY_LOCATOR "=" INI_VALUE_LOCATOR "\n" \
 							"[" INI_SECTION_AUTOSEQ "]\n" INI_KEY_MAX_TX_RETRIES "=" STRINGIFY(INI_VALUE_MAX_TX_RETRIES) "\n"
 
 // same order as BandIndex enum.
@@ -95,6 +98,7 @@ static const char *ini_file_name = "StationData.ini";
 char Free_Text1[MESSAGE_SIZE] = INI_VALUE_FREETEXT1;
 char Free_Text2[MESSAGE_SIZE] = INI_VALUE_FREETEXT2;
 char Comment[MESSAGE_SIZE] = INI_VALUE_COMMENT;
+char Software[MESSAGE_SIZE] = INI_VALUE_SOFTWARE;
 
 extern uint8_t _ssdram; /* Symbol defined in the linker script */
 
@@ -192,17 +196,17 @@ static int setup_free_text(const char *free_text, int field_id)
 	return result;
 }
 
-static void set_comment(const char *comment)
+static void set_item_value(char *field, size_t field_size, const char *default_value, const char *value)
 {
-	if (comment != NULL && strlen(comment) > 0 && strlen(comment) < sizeof(Comment))
+	if (value != NULL && strlen(value) > 0 && strlen(value) < field_size)
 	{
-		if (strcmp(comment, INI_VALUE_COMMENT) != 0)
+		if (strcmp(value, default_value) != 0)
 		{
-			set_text(Comment, comment, -1);
+			set_text(field, value, -1);
 		}
 		else
 		{
-			set_text(Comment, INI_VALUE_COMMENT, -1);
+			set_text(field, default_value, -1);
 		}
 	}
 }
@@ -256,7 +260,7 @@ void Read_Station_File(void)
 						size_t band_data_size = strlen(band_data) + 1;
 						if (band_data_size > 0 && band_data_size < BAND_DATA_SIZE)
 						{
-							char buffer[BAND_DATA_SIZE];
+							char buffer[20];
 							unsigned frequency = (unsigned)(atoi(band_data));
 							sprintf(buffer, "%u.%03u\n", frequency / 1000, frequency % 1000);
 							memcpy(sBand_Data[idx].display, buffer, BAND_DATA_SIZE);
@@ -268,10 +272,13 @@ void Read_Station_File(void)
 
 			// backwards compatibility
 			const char *value = get_ini_value(&ini_data, "MISC", "COMMENT");
-			set_comment(value);
+			set_item_value(Comment, sizeof(Comment), INI_KEY_COMMENT, value);
 
 			value = get_ini_value(&ini_data, INI_SECTION_MISC, INI_KEY_COMMENT);
-			set_comment(value);
+			set_item_value(Comment, sizeof(Comment), INI_VALUE_COMMENT, value);
+
+			value = get_ini_value(&ini_data, INI_SECTION_MISC, INI_KEY_SOFTWARE);
+			set_item_value(Software, sizeof(Software), INI_VALUE_SOFTWARE, value);
 
 			value = get_ini_value(&ini_data, INI_SECTION_AUTOSEQ, INI_KEY_MAX_TX_RETRIES);
 			if (value != NULL && strlen(value) > 0)
@@ -286,7 +293,6 @@ void Read_Station_File(void)
 			{
 				max_tx_retries = INI_VALUE_MAX_TX_RETRIES;
 			}
-		
 
 			f_close(&fil2);
 		}
@@ -322,7 +328,6 @@ static int write_ini_key_value_numeric(const char *key, uint32_t value)
 	return f_puts(buffer, &fil2);
 }
 
-
 void update_stationdata(void)
 {
 	FRESULT fres = f_mount(&FS, SDPath, 1);
@@ -336,12 +341,12 @@ void update_stationdata(void)
 			f_puts("[" INI_SECTION_STATION "]\n", &fil2);
 			write_ini_key_value(INI_KEY_CALL, Station_Call);
 
-			memcpy(Station_Locator, Station_Locator_Full, LOCATOR_SIZE-1);
-			Station_Locator[LOCATOR_SIZE-1] = 0;
+			memcpy(Station_Locator, Station_Locator_Full, LOCATOR_SIZE - 1);
+			Station_Locator[LOCATOR_SIZE - 1] = 0;
 
 			if (strlen(Station_Locator_Full) > LOCATOR_SIZE)
 			{
-				Station_Locator_Full[LOCATOR_SIZE-1] = tolower(Station_Locator_Full[LOCATOR_SIZE-1]);
+				Station_Locator_Full[LOCATOR_SIZE - 1] = tolower(Station_Locator_Full[LOCATOR_SIZE - 1]);
 				Station_Locator_Full[LOCATOR_SIZE] = tolower(Station_Locator_Full[LOCATOR_SIZE]);
 			}
 			write_ini_key_value(INI_KEY_LOCATOR, Station_Locator_Full);
@@ -380,10 +385,6 @@ void update_stationdata(void)
 				{
 					if (INI_VALUE_BANDS[idx] != sBand_Data[idx].Frequency)
 					{
-						char buffer[256];
-						sprintf(buffer, "%s: %u=%u", INI_KEY_BANDS[idx], INI_VALUE_BANDS[idx], sBand_Data[idx].Frequency);
-						logger(buffer, __FILE__, __LINE__);
-
 						write_ini_key_value_numeric(INI_KEY_BANDS[idx], sBand_Data[idx].Frequency);
 					}
 				}
@@ -396,11 +397,20 @@ void update_stationdata(void)
 				write_ini_key_value_numeric(INI_KEY_MAX_TX_RETRIES, max_tx_retries);
 			}
 
-			// has the comment changed?
-			if (strcmp(Comment, INI_VALUE_COMMENT) != 0)
+			// has the comment or software changed?
+			bool comment_changed = strcmp(Comment, INI_VALUE_COMMENT) != 0;
+			bool software_changed = strcmp(Software, INI_VALUE_SOFTWARE) != 0;
+			if (comment_changed || software_changed)
 			{
 				f_puts("[" INI_SECTION_MISC "]\n", &fil2);
-				write_ini_key_value(INI_KEY_COMMENT, Comment);
+				if (comment_changed)
+				{
+					write_ini_key_value(INI_KEY_COMMENT, Comment);
+				}
+				if (software_changed)
+				{
+					write_ini_key_value(INI_KEY_SOFTWARE, Software);
+				}
 			}
 		}
 	}
