@@ -94,7 +94,8 @@ static void SystemClock_Config(void);
 static void Error_Handler(void);
 static void CPU_CACHE_Enable(void);
 static void InitialiseDisplay(void);
-static bool Initialise_Serial();
+static bool Initialise_GPIO();
+static void Check_Board_Version(void);
 #endif
 
 // Helper function for updating TX region display
@@ -188,17 +189,13 @@ int main(void)
 	SystemClock_Config();
 
 	EXT_I2C_Init();
+	Initialise_GPIO();
 
 	start_audio_I2C();
 
-	PTT_Out_Init();
-
-	Init_BoardVersionInput();
 	Check_Board_Version();
-	DeInit_BoardVersionInput();
 
 	InitialiseDisplay();
-	Initialise_Serial();
 	BSP_TS_Init(BSP_LCD_GetXSize(), BSP_LCD_GetYSize());
 
 	init_DSP();
@@ -533,13 +530,16 @@ static void CPU_CACHE_Enable(void)
 	SCB_EnableDCache();
 }
 
-static bool Initialise_Serial()
+static bool Initialise_GPIO()
 {
 	__USART1_CLK_ENABLE();
 	__I2C1_CLK_ENABLE();
 	__GPIOA_CLK_ENABLE();
 	__GPIOB_CLK_ENABLE();
+	__GPIOD_CLK_ENABLE();
 	__GPIOG_CLK_ENABLE();
+	__GPIOI_CLK_ENABLE();
+	__GPIOH_CLK_ENABLE();
 
 	GPIO_InitTypeDef GPIO_InitStructure;
 
@@ -558,6 +558,60 @@ static bool Initialise_Serial()
 	GPIO_InitStructure.Pull = GPIO_NOPULL;
 	HAL_GPIO_Init(GPIOB, &GPIO_InitStructure);
 
+	// RXSW
+	GPIO_InitStructure.Pin = GPIO_PIN_2; // I2
+	GPIO_InitStructure.Mode = GPIO_MODE_OUTPUT_OD;
+	GPIO_InitStructure.Pull = GPIO_PULLUP;
+	GPIO_InitStructure.Speed = GPIO_SPEED_HIGH;
+	HAL_GPIO_Init(GPIOI, &GPIO_InitStructure);
+
+	// TXSW
+	GPIO_InitStructure.Pin = GPIO_PIN_15; // A15
+	GPIO_InitStructure.Mode = GPIO_MODE_OUTPUT_OD;
+	GPIO_InitStructure.Pull = GPIO_PULLUP;
+	GPIO_InitStructure.Speed = GPIO_SPEED_HIGH;
+	HAL_GPIO_Init(GPIOA, &GPIO_InitStructure);
+
+	// D4 Shaping output
+	GPIO_InitStructure.Pin = GPIO_PIN_4;
+	GPIO_InitStructure.Mode = GPIO_MODE_OUTPUT_OD;
+	GPIO_InitStructure.Pull = GPIO_PULLUP;
+	GPIO_InitStructure.Speed = GPIO_SPEED_HIGH;
+	HAL_GPIO_Init(GPIOD, &GPIO_InitStructure);
+
+	// I3 RLY
+	GPIO_InitStructure.Pin = GPIO_PIN_3;
+	GPIO_InitStructure.Mode = GPIO_MODE_OUTPUT_OD;
+	GPIO_InitStructure.Pull = GPIO_PULLUP;
+	GPIO_InitStructure.Speed = GPIO_SPEED_HIGH;
+	HAL_GPIO_Init(GPIOI, &GPIO_InitStructure);
+
+	// D6 Dot input
+	GPIO_InitStructure.Pin = GPIO_PIN_6;
+	GPIO_InitStructure.Mode = GPIO_MODE_AF_OD;
+	GPIO_InitStructure.Pull = GPIO_PULLUP;
+	GPIO_InitStructure.Speed = GPIO_SPEED_HIGH;
+	HAL_GPIO_Init(GPIOD, &GPIO_InitStructure);
+
+	// D7 Dash input
+	GPIO_InitStructure.Pin = GPIO_PIN_7;
+	GPIO_InitStructure.Mode = GPIO_MODE_AF_OD;
+	GPIO_InitStructure.Pull = GPIO_PULLUP;
+	GPIO_InitStructure.Speed = GPIO_SPEED_HIGH;
+	HAL_GPIO_Init(GPIOD, &GPIO_InitStructure);
+
+	// H6 BTS
+	GPIO_InitStructure.Pin = GPIO_PIN_6;
+	GPIO_InitStructure.Mode = GPIO_MODE_INPUT;
+	GPIO_InitStructure.Pull = GPIO_PULLUP;
+	GPIO_InitStructure.Speed = GPIO_SPEED_HIGH;
+	HAL_GPIO_Init(GPIOH, &GPIO_InitStructure);
+
+	HAL_GPIO_WritePin(GPIOI, GPIO_PIN_3, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(GPIOH, GPIO_PIN_6, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(GPIOI, GPIO_PIN_2, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_15, GPIO_PIN_RESET);
+
 	s_UART1Handle.Instance = USART1;
 	s_UART1Handle.Init.BaudRate = 115200;
 	s_UART1Handle.Init.WordLength = UART_WORDLENGTH_8B;
@@ -567,6 +621,19 @@ static bool Initialise_Serial()
 	s_UART1Handle.Init.Mode = UART_MODE_TX_RX;
 
 	return (HAL_UART_Init(&s_UART1Handle) == HAL_OK);
+}
+
+static void Check_Board_Version(void)
+{
+	Band_Minimum = _20M;
+
+	// GPIO Pin 6 is grounded for new model
+	if (HAL_GPIO_ReadPin(GPIOH, GPIO_PIN_6) == 0)
+	{
+		Band_Minimum = _40M;
+	}
+
+	Options_SetMinimum(Band_Minimum);
 }
 
 void logger(const char *message, const char *file, int line)

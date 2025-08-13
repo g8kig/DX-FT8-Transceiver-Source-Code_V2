@@ -42,10 +42,6 @@ extern int BandIndex;
 extern int Tune_On; // 0 = Receive, 1 = Xmit Tune Signal
 extern int Beacon_On;
 extern int Skip_Tx1;
-void Init_BoardVersionInput();
-void Check_Board_Version();
-void DeInit_BoardVersionInput();
-void PTT_Out_Init(void);
 void start_Si5351(void);
 void receive_sequence(void);
 

@@ -208,14 +208,6 @@ void xmit_sequence(void);
 void receive_sequence(void);
 void start_Si5351(void);
 
-void PTT_Out_Init(void);
-void PTT_Out_Set(void);
-void PTT_Out_RST_Clr(void);
-void RLY_Select_20to40(void);
-void RLY_Select_10to17(void);
-void Check_Board_Version(void);
-void Init_BoardVersionInput(void);
-void DeInit_BoardVersionInput(void);
 void set_codec_input_gain(void);
 
 extern ButtonStruct sButtonData[NumButtons];

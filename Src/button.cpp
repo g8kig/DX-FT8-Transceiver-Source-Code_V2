@@ -692,6 +692,16 @@ void checkButton(void)
 	}
 }
 
+static void RLY_Select_20to40(void)
+{
+	HAL_GPIO_WritePin(GPIOI, GPIO_PIN_3, GPIO_PIN_SET);
+}
+
+static void RLY_Select_10to17(void)
+{
+	HAL_GPIO_WritePin(GPIOI, GPIO_PIN_3, GPIO_PIN_RESET);
+}
+
 void SelectFilterBlock()
 {
 	if (Band_Minimum == _40M)
@@ -1367,104 +1377,32 @@ void erase_Cal_Display(void)
 	Options_StoreValue(OPTION_Skip_Tx1);
 }
 
-void PTT_Out_Init(void)
-{
-	GPIO_InitTypeDef gpio_init_structure;
-
-	__HAL_RCC_GPIOI_CLK_ENABLE();
-
-	gpio_init_structure.Pin = GPIO_PIN_2; // D8  RXSW
-	gpio_init_structure.Mode = GPIO_MODE_OUTPUT_OD;
-	gpio_init_structure.Pull = GPIO_PULLUP;
-	gpio_init_structure.Speed = GPIO_SPEED_HIGH;
-
-	HAL_GPIO_Init(GPIOI, &gpio_init_structure);
-
-	HAL_GPIO_WritePin(GPIOI, GPIO_PIN_2, GPIO_PIN_SET); // Set = Receive connect
-
-	__HAL_RCC_GPIOA_CLK_ENABLE();
-
-	gpio_init_structure.Pin = GPIO_PIN_15; // D9 TXSW
-	gpio_init_structure.Mode = GPIO_MODE_OUTPUT_OD;
-	gpio_init_structure.Pull = GPIO_PULLUP;
-	gpio_init_structure.Speed = GPIO_SPEED_HIGH;
-
-	HAL_GPIO_Init(GPIOA, &gpio_init_structure);
-	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_15, GPIO_PIN_RESET); // Set = Receive short
-}
-
-void Init_BoardVersionInput(void)
-{
-	GPIO_InitTypeDef gpio_init_structure;
-
-	__HAL_RCC_GPIOH_CLK_ENABLE();
-
-	gpio_init_structure.Pin = GPIO_PIN_6; // D6  BTS
-	gpio_init_structure.Mode = GPIO_MODE_INPUT;
-	gpio_init_structure.Pull = GPIO_PULLUP;
-	gpio_init_structure.Speed = GPIO_SPEED_HIGH;
-
-	HAL_GPIO_Init(GPIOH, &gpio_init_structure);
-
-	HAL_GPIO_WritePin(GPIOH, GPIO_PIN_6, GPIO_PIN_RESET); // Set = Receive connect
-}
-
-void DeInit_BoardVersionInput(void)
-{
-	HAL_GPIO_DeInit(GPIOH, GPIO_PIN_6);
-}
-
-void PTT_Out_Set(void)
+static void PTT_Out_Set(void)
 {
 	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_15, GPIO_PIN_RESET);
 	HAL_Delay(1);
 	HAL_GPIO_WritePin(GPIOI, GPIO_PIN_2, GPIO_PIN_SET);
 }
 
-void PTT_Out_RST_Clr(void)
+static void PTT_Out_RST_Clr(void)
 {
 	HAL_GPIO_WritePin(GPIOI, GPIO_PIN_2, GPIO_PIN_RESET);
 	HAL_Delay(1);
 	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_15, GPIO_PIN_SET);
 }
 
-void RLY_Select_20to40(void)
-{
-	HAL_GPIO_WritePin(GPIOI, GPIO_PIN_3, GPIO_PIN_SET);
-}
-
-void RLY_Select_10to17(void)
-{
-	HAL_GPIO_WritePin(GPIOI, GPIO_PIN_3, GPIO_PIN_RESET);
-}
-
 static void Init_BandSwitchOutput(void)
 {
-	GPIO_InitTypeDef gpio_init_structure;
+	GPIO_InitTypeDef GPIO_InitStructure;
 
-	gpio_init_structure.Pin = GPIO_PIN_3; // D7  RLY
-	gpio_init_structure.Mode = GPIO_MODE_OUTPUT_OD;
-	gpio_init_structure.Pull = GPIO_PULLUP;
-	gpio_init_structure.Speed = GPIO_SPEED_HIGH;
+	GPIO_InitStructure.Pin = GPIO_PIN_3; // D7  RLY
+	GPIO_InitStructure.Mode = GPIO_MODE_OUTPUT_OD;
+	GPIO_InitStructure.Pull = GPIO_PULLUP;
+	GPIO_InitStructure.Speed = GPIO_SPEED_HIGH;
 
-	HAL_GPIO_Init(GPIOI, &gpio_init_structure);
+	HAL_GPIO_Init(GPIOI, &GPIO_InitStructure);
 
 	HAL_GPIO_WritePin(GPIOI, GPIO_PIN_3, GPIO_PIN_RESET);
-}
-
-void Check_Board_Version(void)
-{
-	Band_Minimum = _20M;
-
-	// GPIO Pin 6 is grounded for new model
-	if (HAL_GPIO_ReadPin(GPIOH, GPIO_PIN_6) == 0)
-	{
-		Init_BandSwitchOutput();
-
-		Band_Minimum = _40M;
-	}
-
-	Options_SetMinimum(Band_Minimum);
 }
 
 void set_codec_input_gain(void)
