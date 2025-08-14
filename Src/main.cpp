@@ -237,6 +237,7 @@ int main(int argc, char *argv[])
 #endif
 
 	autoseq_init();
+	updateTime();
 
 	while (1)
 	{
@@ -380,7 +381,6 @@ int main(int argc, char *argv[])
 		}
 
 		update_synchronization();
-		updateTime();
 	}
 }
 
