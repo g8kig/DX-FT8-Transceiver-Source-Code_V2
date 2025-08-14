@@ -795,6 +795,7 @@ void executeButton(uint16_t index)
 		else
 		{
 			Tune_On = 1; // Turns off display of FT8 traffic
+			updateTime();
 			setup_Cal_Display();
 		}
 		break;
