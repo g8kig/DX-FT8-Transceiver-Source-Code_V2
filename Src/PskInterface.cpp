@@ -14,6 +14,7 @@
 
 // in stm32746g_discovery.c
 extern I2C_HandleTypeDef hI2cExtHandler;
+static const int I2C_TIMEOUT = 1000;
 
 struct RTC_Time
 {
@@ -51,6 +52,12 @@ void requestTimeSync(void)
 	syncTimeCounter = 0;
 }
 
+static void ReinitialiseI2C(void)
+{
+	HAL_I2C_DeInit(&hI2cExtHandler);
+	HAL_I2C_Init(&hI2cExtHandler);
+}
+
 void updateTime(void)
 {
 	if (syncTime && syncTimeCounter++ < MAX_SYNCTIME_REQUESTS)
@@ -63,7 +70,7 @@ void updateTime(void)
 													I2C_MEMADD_SIZE_8BIT,
 													(uint8_t *)&rtcTime,
 													sizeof(rtcTime),
-													HAL_MAX_DELAY);
+													I2C_TIMEOUT);
 		if (status == HAL_OK)
 		{
 			if (rtcTime.year > 24 && rtcTime.year < 99)
@@ -87,6 +94,8 @@ void updateTime(void)
 			sprintf(buffer, "Time sync request failed: %d", status);
 			logger(buffer, __FILE__, __LINE__);
 			syncTime = false;
+
+			ReinitialiseI2C();
 		}
 	}
 }
@@ -119,7 +128,12 @@ bool addSenderRecord(const char *callsign, const char *gridSquare, const char *s
 													 I2C_MEMADD_SIZE_8BIT,
 													 buffer,
 													 ptr - buffer,
-													 HAL_MAX_DELAY);
+													 I2C_TIMEOUT);
+		if (status != HAL_OK)
+		{
+			ReinitialiseI2C();
+		}
+
 		result = status == HAL_OK;
 	}
 
@@ -142,7 +156,12 @@ bool addSenderRecord(const char *callsign, const char *gridSquare, const char *s
 														 I2C_MEMADD_SIZE_8BIT,
 														 buffer,
 														 ptr - buffer,
-														 HAL_MAX_DELAY);
+														 I2C_TIMEOUT);
+			if (status != HAL_OK)
+			{
+				ReinitialiseI2C();
+			}
+
 			result = status == HAL_OK;
 		}
 	}
@@ -185,7 +204,12 @@ bool addReceivedRecord(const char *callsign, uint32_t frequency, uint8_t snr)
 														 I2C_MEMADD_SIZE_8BIT,
 														 buffer,
 														 ptr - buffer,
-														 HAL_MAX_DELAY);
+														 I2C_TIMEOUT);
+			if (status != HAL_OK)
+			{
+				ReinitialiseI2C();
+			}
+
 			result = status == HAL_OK;
 		}
 	}
@@ -201,6 +225,10 @@ bool sendRequest(void)
 												 I2C_MEMADD_SIZE_8BIT,
 												 buffer,
 												 sizeof(buffer),
-												 HAL_MAX_DELAY);
+												 I2C_TIMEOUT);
+	if (status != HAL_OK)
+	{
+		ReinitialiseI2C();
+	}
 	return status == HAL_OK;
 }
