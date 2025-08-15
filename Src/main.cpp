@@ -61,7 +61,6 @@ extern "C"
 #include "Display.h"
 #include "qso_display.h"
 #include "traffic_manager.h"
-#include "workqueue.h"
 
 uint32_t start_time, ft8_time;
 
@@ -207,7 +206,6 @@ int main(void)
 	SD_Initialize();
 	Read_Station_File();
 	setup_display();
-	initialiseWorkQueue();
 
 	Options_Initialize();
 
@@ -239,7 +237,6 @@ int main(int argc, char *argv[])
 #endif
 
 	autoseq_init();
-	processWorkQueue();
 	updateTime();
 
 	while (1)

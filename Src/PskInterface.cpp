@@ -4,10 +4,16 @@
 #include <memory.h>
 
 #include "main.h"
+#include "stm32f7xx_hal_rcc.h"
+#include "stm32746g_discovery_ts.h"
+#include "stm32746g_discovery_lcd.h"
+#include "stm32f7xx_hal_tim.h"
 #include "DS3231.h"
 #include "gen_ft8.h"
 #include "PskInterface.h"
-#include "workqueue.h"
+
+// in stm32746g_discovery.c
+extern I2C_HandleTypeDef hI2cExtHandler;
 
 struct RTC_Time
 {
@@ -19,6 +25,18 @@ struct RTC_Time
 	uint8_t month;
 	uint8_t year;
 };
+
+enum I2COperation
+{
+	OP_TIME_REQUEST = 0,
+	OP_SENDER_RECORD,
+	OP_SENDER_SOFTWARE_RECORD,
+	OP_RECEIVER_RECORD,
+	OP_SEND_REQUEST
+};
+
+static const uint8_t ESP32_I2C_ADDRESS = 0x2A;
+
 static const int MAX_SYNCTIME_REQUESTS = 10;
 
 static bool syncTime = true;
@@ -39,8 +57,14 @@ void updateTime(void)
 	{
 		RTC_Time rtcTime;
 		memset(&rtcTime, 0, sizeof(rtcTime));
-		bool status = requestTime(&rtcTime, sizeof(rtcTime));
-		if (status)
+		HAL_StatusTypeDef status = HAL_I2C_Mem_Read(&hI2cExtHandler,
+													ESP32_I2C_ADDRESS << 1,
+													OP_TIME_REQUEST,
+													I2C_MEMADD_SIZE_8BIT,
+													(uint8_t *)&rtcTime,
+													sizeof(rtcTime),
+													HAL_MAX_DELAY);
+		if (status == HAL_OK)
 		{
 			if (rtcTime.year > 24 && rtcTime.year < 99)
 			{
@@ -89,7 +113,14 @@ bool addSenderRecord(const char *callsign, const char *gridSquare, const char *s
 		memcpy(ptr, gridSquare, gridSquareLength);
 		ptr += gridSquareLength;
 
-		result = addWorkQueueItem(OP_SENDER_RECORD, buffer, ptr - buffer);
+		HAL_StatusTypeDef status = HAL_I2C_Mem_Write(&hI2cExtHandler,
+													 ESP32_I2C_ADDRESS << 1,
+													 OP_SENDER_RECORD,
+													 I2C_MEMADD_SIZE_8BIT,
+													 buffer,
+													 ptr - buffer,
+													 HAL_MAX_DELAY);
+		result = status == HAL_OK;
 	}
 
 	if (result)
@@ -105,7 +136,14 @@ bool addSenderRecord(const char *callsign, const char *gridSquare, const char *s
 			memcpy(ptr, software, softwareLength);
 			ptr += softwareLength;
 
-			result = addWorkQueueItem(OP_SENDER_SOFTWARE_RECORD, buffer, ptr - buffer);
+			HAL_StatusTypeDef status = HAL_I2C_Mem_Write(&hI2cExtHandler,
+														 ESP32_I2C_ADDRESS << 1,
+														 OP_SENDER_SOFTWARE_RECORD,
+														 I2C_MEMADD_SIZE_8BIT,
+														 buffer,
+														 ptr - buffer,
+														 HAL_MAX_DELAY);
+			result = status == HAL_OK;
 		}
 	}
 	return result;
@@ -116,7 +154,7 @@ bool addReceivedRecord(const char *callsign, uint32_t frequency, uint8_t snr)
 	bool result = true;
 	if (!senderSync)
 	{
-		result = addSenderRecord(Station_Call, Station_Locator_Full, Software);
+		result = addSenderRecord(Station_Call, Station_Locator_Full, "DX FT8 Transceiver");
 		senderSync = true;
 	}
 
@@ -141,7 +179,14 @@ bool addReceivedRecord(const char *callsign, uint32_t frequency, uint8_t snr)
 			// Add SNR (1 byte)
 			*ptr++ = snr;
 
-			result = addWorkQueueItem(OP_RECEIVER_RECORD, buffer, ptr - buffer);
+			HAL_StatusTypeDef status = HAL_I2C_Mem_Write(&hI2cExtHandler,
+														 ESP32_I2C_ADDRESS << 1,
+														 OP_RECEIVER_RECORD,
+														 I2C_MEMADD_SIZE_8BIT,
+														 buffer,
+														 ptr - buffer,
+														 HAL_MAX_DELAY);
+			result = status == HAL_OK;
 		}
 	}
 	return result;
@@ -149,5 +194,12 @@ bool addReceivedRecord(const char *callsign, uint32_t frequency, uint8_t snr)
 
 bool sendRequest(void)
 {
-	return addWorkQueueItem(OP_SEND_REQUEST, NULL, 0);
+	uint8_t buffer[1] = {0};
+												 ESP32_I2C_ADDRESS << 1,
+												 OP_SEND_REQUEST,
+												 I2C_MEMADD_SIZE_8BIT,
+												 buffer,
+												 sizeof(buffer),
+												 HAL_MAX_DELAY);
+	return status == HAL_OK;
 }

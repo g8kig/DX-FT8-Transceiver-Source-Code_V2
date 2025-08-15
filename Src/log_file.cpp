@@ -38,13 +38,19 @@
 
 /* Fatfs structure */
 static FATFS FS;
+static FIL LogFile;
 static FIL RxTxLogFile;
 
-static void Open_Log_File(void)
+void Init_Log_File(void)
 {
-	FIL LogFile;
-	if ((f_mount(&FS, "SD:", 1) == FR_OK) &&
-	    (f_open(&LogFile, file_name_string,
+	make_File_Name();
+	Open_Log_File();
+}
+
+void Open_Log_File(void)
+{
+	f_mount(&FS, "SD:", 1);
+	if ((f_open(&LogFile, file_name_string,
 				FA_OPEN_ALWAYS | FA_WRITE | FA_OPEN_APPEND) == FR_OK) &&
 		(f_size(&LogFile) == 0))
 	{
@@ -58,18 +64,10 @@ static void Open_Log_File(void)
 	f_close(&LogFile);
 }
 
-void Init_Log_File(void)
-{
-	make_File_Name();
-	Open_Log_File();
-}
-
-
 void Write_Log_Data(const char *str)
 {
-	FIL LogFile;
-	if (f_mount(&FS, "SD:", 1) == FR_OK &&
-	    f_open(&LogFile, file_name_string,
+	f_mount(&FS, "SD:", 1);
+	if (f_open(&LogFile, file_name_string,
 			   FA_OPEN_ALWAYS | FA_WRITE | FA_OPEN_APPEND) == FR_OK)
 	{
 		f_lseek(&LogFile, f_size(&LogFile));
@@ -82,9 +80,8 @@ void Write_Log_Data(const char *str)
 
 void Write_RxTxLog_Data(const char *str)
 {
-	FIL RxTxLogFile;
-	if (f_mount(&FS, "SD:", 1) == FR_OK &&
-	    f_open(&RxTxLogFile, "RxTxLog.txt",
+	f_mount(&FS, "SD:", 1);
+	if (f_open(&RxTxLogFile, "RxTxLog.txt",
 			   FA_OPEN_ALWAYS | FA_WRITE | FA_OPEN_APPEND) == FR_OK)
 	{
 		f_lseek(&RxTxLogFile, f_size(&RxTxLogFile));
@@ -93,4 +90,9 @@ void Write_RxTxLog_Data(const char *str)
 	}
 
 	f_close(&RxTxLogFile);
+}
+
+void Close_Log_File(void)
+{
+	f_close(&LogFile);
 }
