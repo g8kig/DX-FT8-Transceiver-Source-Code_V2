@@ -190,7 +190,8 @@ Src/SDR_Audio.cpp \
 Src/SiLabs.cpp \
 Src/Sine_table.cpp \
 Src/traffic_manager.cpp \
-Src/PskInterface.cpp
+Src/PskInterface.cpp \
+Src/workqueue.cpp \
 
 # Object files
 OBJDIR = build
