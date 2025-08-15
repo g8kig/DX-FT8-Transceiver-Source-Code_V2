@@ -154,7 +154,7 @@ bool addReceivedRecord(const char *callsign, uint32_t frequency, uint8_t snr)
 	bool result = true;
 	if (!senderSync)
 	{
-		result = addSenderRecord(Station_Call, Station_Locator_Full, "DX FT8 Transceiver");
+		result = addSenderRecord(Station_Call, Station_Locator_Full, Software);
 		senderSync = true;
 	}
 
