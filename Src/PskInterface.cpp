@@ -195,6 +195,7 @@ bool addReceivedRecord(const char *callsign, uint32_t frequency, uint8_t snr)
 bool sendRequest(void)
 {
 	uint8_t buffer[1] = {0};
+	HAL_StatusTypeDef status = HAL_I2C_Mem_Write(&hI2cExtHandler,
 												 ESP32_I2C_ADDRESS << 1,
 												 OP_SEND_REQUEST,
 												 I2C_MEMADD_SIZE_8BIT,
