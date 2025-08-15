@@ -196,7 +196,7 @@ int main(void)
 	Init_BoardVersionInput();
 	Check_Board_Version();
 	DeInit_BoardVersionInput();
-
+	
 	InitialiseDisplay();
 	Initialise_Serial();
 	BSP_TS_Init(BSP_LCD_GetXSize(), BSP_LCD_GetYSize());
@@ -237,6 +237,7 @@ int main(int argc, char *argv[])
 #endif
 
 	autoseq_init();
+	updateTime();
 
 	while (1)
 	{
@@ -380,7 +381,6 @@ int main(int argc, char *argv[])
 		}
 
 		update_synchronization();
-		updateTime();
 	}
 }
 

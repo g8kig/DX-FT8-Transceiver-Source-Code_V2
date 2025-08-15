@@ -86,6 +86,7 @@ char Station_Locator[LOCATOR_SIZE];			  // four character locator + null termina
 char Target_Call[CALLSIGN_SIZE];			  // seven character call sign (e.g. 3DA0ABC) + optional /P + null terminator
 char Target_Locator[LOCATOR_SIZE];			  // four character locator  + null terminator (e.g. FN20)
 int Station_RSL;
+int max_tx_retries;
 
 static uint8_t isInitialized = 0;
 

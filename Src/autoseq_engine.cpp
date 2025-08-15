@@ -27,12 +27,6 @@
 #include "DS3231.h" // For log_rtc_time_string
 #endif
 
-extern int Beacon_On; // TODO get rid of manual extern
-extern int Skip_Tx1;  // TODO get rid of manual extern
-
-/***** Configurable knobs *****/
-int max_tx_retries;
-
 /* For DECENDING order. Returns −1 if (a) > (b), 0 if equal, +1 if (a) < (b) */
 #define CMP(a, b) (((a) < (b)) - ((a) > (b)))
 
@@ -536,7 +530,6 @@ static bool generate_response(ctx_t *ctx, const Decode *msg, bool override)
             break;
         case TX5:
             set_state(ctx, AS_ROGERS, TX_UNDEF, 0);
-        // case TX6 already handled by autoseq_on_touch()
         default:
             break;
         }
@@ -570,9 +563,6 @@ static bool generate_response(ctx_t *ctx, const Decode *msg, bool override)
     case AS_REPLYING:
         switch (ctx->rcvd_msg_type)
         {
-        // Since we sent TX1, it doesn't make sense to respond to TX1
-        case TX1:
-            return false;
         case TX2:
             set_state(ctx, AS_ROGER_REPORT, TX3, max_tx_retries);
             return true;
@@ -593,12 +583,6 @@ static bool generate_response(ctx_t *ctx, const Decode *msg, bool override)
     case AS_REPORT:
         switch (ctx->rcvd_msg_type)
         {
-        // DX didn't copy our TX2 response, stay in the same state by returning false
-        case TX1:
-            return false;
-        // Since we sent TX2, it doesn't make sense to respond to TX2
-        case TX2:
-            return false;
         case TX3:
             set_state(ctx, AS_ROGERS, TX4, max_tx_retries);
             return true;
@@ -615,21 +599,6 @@ static bool generate_response(ctx_t *ctx, const Decode *msg, bool override)
     case AS_ROGER_REPORT:
         switch (ctx->rcvd_msg_type)
         {
-        // Since we sent TX1, it doesn't make sense to respond to TX1
-        // case TX1:
-        //     set_state(ctx, AS_REPORT, TX2, MAX_TX_RETRY);
-        //     return true;
-
-        // DX didn't copy our TX3 response, stay in the same state by returning false
-        // case TX2:
-        //     set_state(ctx, AS_ROGER_REPORT, TX3, MAX_TX_RETRY);
-        //     return true;
-
-        // Since we sent TX3, it doesn't make sense to respond to TX3
-        // case TX3:
-        //     set_state(ctx, AS_SIGNOFF, TX4, MAX_TX_RETRY);
-        //     return true;
-
         // QSO complete
         case TX4:
         case TX5: // Be polite, echo back 73
@@ -717,7 +686,7 @@ static void sort_and_clean()
 
 static void write_worked_qso()
 {
-    static const char band_strs[][4] = {
+    static const char band_strs[NumBands][4] = {
         "40", "30", "20", "17", "15", "12", "10"};
     char *buf = add_worked_qso();
     // band, HH:MM, callsign, SNR
