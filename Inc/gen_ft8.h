@@ -34,11 +34,12 @@ extern char Free_Text1[MESSAGE_SIZE];
 extern char Free_Text2[MESSAGE_SIZE];
 extern char Comment[MESSAGE_SIZE];
 extern char Software[MESSAGE_SIZE];
+extern int max_tx_retries;
 
-void Read_Station_File(void);
-void SD_Initialize(void);
+extern void Read_Station_File(void);
+extern void SD_Initialize(void);
 
-void queue_custom_text(const char *plain_text); /* needed by autoseq_engine */
+extern void queue_custom_text(const char *plain_text); /* needed by autoseq_engine */
 
 extern void update_stationdata(void);
 

@@ -27,12 +27,6 @@
 #include "DS3231.h" // For log_rtc_time_string
 #endif
 
-extern int Beacon_On; // TODO get rid of manual extern
-extern int Skip_Tx1;  // TODO get rid of manual extern
-
-/***** Compile‑time knobs *****/
-#define MAX_TX_RETRY 3
-
 /* For DECENDING order. Returns −1 if (a) > (b), 0 if equal, +1 if (a) < (b) */
 #define CMP(a, b) (((a) < (b)) - ((a) > (b)))
 
@@ -160,7 +154,7 @@ void autoseq_on_touch(const Decode *msg)
     }
     ctx->snr_tx = msg->snr;
     set_state(ctx, Skip_Tx1 ? AS_REPORT : AS_REPLYING,
-              Skip_Tx1 ? TX2 : TX1, MAX_TX_RETRY);
+              Skip_Tx1 ? TX2 : TX1, max_tx_retries);
     sort_and_clean();
 }
 
@@ -536,7 +530,6 @@ static bool generate_response(ctx_t *ctx, const Decode *msg, bool override)
             break;
         case TX5:
             set_state(ctx, AS_ROGERS, TX_UNDEF, 0);
-        // case TX6 already handled by autoseq_on_touch()
         default:
             break;
         }
@@ -554,13 +547,13 @@ static bool generate_response(ctx_t *ctx, const Decode *msg, bool override)
         switch (ctx->rcvd_msg_type)
         {
         case TX1:
-            set_state(ctx, AS_REPORT, TX2, MAX_TX_RETRY);
+            set_state(ctx, AS_REPORT, TX2, max_tx_retries);
             return true;
         case TX2:
-            set_state(ctx, AS_ROGER_REPORT, TX3, MAX_TX_RETRY);
+            set_state(ctx, AS_ROGER_REPORT, TX3, max_tx_retries);
             return true;
         case TX3:
-            set_state(ctx, AS_ROGERS, TX4, MAX_TX_RETRY);
+            set_state(ctx, AS_ROGERS, TX4, max_tx_retries);
             return true;
         default:
             return false;
@@ -571,10 +564,10 @@ static bool generate_response(ctx_t *ctx, const Decode *msg, bool override)
         switch (ctx->rcvd_msg_type)
         {
         case TX2:
-            set_state(ctx, AS_ROGER_REPORT, TX3, MAX_TX_RETRY);
+            set_state(ctx, AS_ROGER_REPORT, TX3, max_tx_retries);
             return true;
         case TX3:
-            set_state(ctx, AS_ROGERS, TX4, MAX_TX_RETRY);
+            set_state(ctx, AS_ROGERS, TX4, max_tx_retries);
             return true;
 
         // QSO complete without signal report exchange
@@ -591,7 +584,7 @@ static bool generate_response(ctx_t *ctx, const Decode *msg, bool override)
         switch (ctx->rcvd_msg_type)
         {
         case TX3:
-            set_state(ctx, AS_ROGERS, TX4, MAX_TX_RETRY);
+            set_state(ctx, AS_ROGERS, TX4, max_tx_retries);
             return true;
         // QSO complete without signal report exchange
         case TX4:
