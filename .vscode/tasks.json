@@ -1,0 +1,63 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "process",
+			"label": "Build",
+			"command": "make",
+			"args": [
+				"-j2",
+				"all"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"problemMatcher": [],
+			"detail": "Build the project"
+		},
+		{
+			"type": "process",
+			"label": "Clean",
+			"command": "make",
+			"args": [
+				"clean"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": false
+			},
+			"problemMatcher": [],
+			"detail": "Clean the project"
+		},
+		{
+			"type": "process",
+			"label": "Flash",
+			"command": "make",
+			"args": [
+				"flash"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": false
+			},
+			"problemMatcher": [],
+			"detail": "Flash (transfer code to the device)"
+		},
+		{
+			"type": "process",
+			"label": "Monitor",
+			"command": "pio",
+			"args": [
+				"device",
+				"monitor"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": false
+			},
+			"problemMatcher": [],
+			"detail": "Device monitor"
+		}
+	]
+}
