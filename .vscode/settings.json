@@ -1,2 +1,3 @@
 {
     "C_Cpp.default.compilerPath": "${env:HOME}/.platformio/packages/toolchain-gccarmnoneeabi/bin/arm-none-eabi-gcc"
+}
