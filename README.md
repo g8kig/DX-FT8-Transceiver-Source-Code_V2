@@ -25,5 +25,12 @@
 ### This requires an external ESP32 module
 ### Please see https://github.com/g8kig/DX-FT8-TimeSync_PSKReporter for more information about constructing and programming the simple module that plugs into the transceiver.
 ###
+## Building
+### Visual Studio Code is set up as the default IDE for this project.
+### Follow the instructions at the top of the Makefile to set up the compiler and tools
+### For Linux and MacOS users, please also set the environment variable USERPROFILE to point to your home directory.
+### so 'export USERPROFILE=$HOME && code' works when invoking Visual Studio Code from the command line
+### or add export USERPROFILE=$HOME to your .zprofile.
+###
 ## What's Next?
 ## Since the Source Code is Open Source we invite you to join in with your improvements!!
