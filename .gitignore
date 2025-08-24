@@ -5,3 +5,5 @@ Katy.elf
 Katy.hex
 Katy.list
 Katy.bin
+.vscode/extensions.json
+.vscode/launch.json
