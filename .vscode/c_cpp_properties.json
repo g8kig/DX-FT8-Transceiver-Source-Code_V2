@@ -28,7 +28,7 @@
                 "USE_STM32746G_DISCO",
                 "USE_IOEXPANDER"
             ],
-            "compilerPath": "${env:HOME}/.platformio/packages/toolchain-gccarmnoneeabi/bin/arm-none-eabi-gcc",
+            "compilerPath": "${env:USERPROFILE}/.platformio/packages/toolchain-gccarmnoneeabi/bin/arm-none-eabi-gcc",
             "cStandard": "c11",
             "cppStandard": "gnu++11",
             "intelliSenseMode": "linux-gcc-arm"
