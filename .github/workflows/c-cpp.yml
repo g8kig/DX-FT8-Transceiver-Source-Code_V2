@@ -21,7 +21,7 @@ jobs:
         run: pip install --upgrade platformio
 
       - name: Install platformio toolchain
-        run: pio pkg install --tool toolchain-gccarmnoneeabi@~1.100301.0
+        run: cd Tools && pio pkg install --tool toolchain-gccarmnoneeabi@~1.100301.0 && cd ..
 
       - name: Build
         run: make -j
