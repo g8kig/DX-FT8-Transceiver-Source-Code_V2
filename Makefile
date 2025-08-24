@@ -245,6 +245,6 @@ flash: Katy.bin
 	st-flash --reset write Katy.bin 0x08000000
 
 clean:
-	rm -f $(OBJS) $(TARGET) Katy.hex Katy.list Katy.bin
+	rm -f $(OBJS) $(TARGET) Katy.hex Katy.list Katy.bin Katy.map
 	rm -rf $(OBJDIR)
 
