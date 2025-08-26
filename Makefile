@@ -3,7 +3,13 @@
 # Optionally also requires the ST-Link tools for flashing the STM32F7 microcontroller
 # Installation of stlink tools: For Linux Debian family install using "sudo apt -y install stlink-tools"
 # For other plaforms see https://github.com/stlink-org/stlink/releases (not tested) 
-# Install platformio-cli and then run 'pio pkg install --tool toolchain-gccarmnoneeabi@@~1.100301.0' to install the toolchain
+# Install platformio-cli and then run
+#
+# cd Tools
+# pio pkg install --tool toolchain-gccarmnoneeabi@@~1.100301.0
+# cd ..
+#
+# to install the toolchain
 # To install GNU Make on Windows see https://stackoverflow.com/questions/32127524/how-to-install-and-use-make-in-windows
 
 # STM32 toolchain path
@@ -239,6 +245,6 @@ flash: Katy.bin
 	st-flash --reset write Katy.bin 0x08000000
 
 clean:
-	rm -f $(OBJS) $(TARGET) Katy.hex Katy.list Katy.bin
+	rm -f $(OBJS) $(TARGET) Katy.hex Katy.list Katy.bin Katy.map
 	rm -rf $(OBJDIR)
 

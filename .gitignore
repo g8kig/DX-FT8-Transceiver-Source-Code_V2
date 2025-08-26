@@ -4,5 +4,6 @@ Katy.map
 Katy.elf
 Katy.hex
 Katy.list
-.vscode
 Katy.bin
+.vscode/extensions.json
+.vscode/launch.json

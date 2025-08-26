@@ -1,0 +1,38 @@
+{
+    "configurations": [
+        {
+            "name": "stm32f7",
+            "includePath": [
+                "Drivers/BSP/Common",
+                "Drivers/BSP/STM32746G_DISCOVERY",
+                "Drivers/BSP/exc7200",
+                "Drivers/BSP/ft5336",
+                "Drivers/BSP/mfxstm32l152",
+                "Drivers/BSP/ov9655",
+                "Drivers/BSP/s5k5cag",
+                "Drivers/BSP/stmpe811",
+                "Drivers/BSP/ts3510",
+                "Drivers/BSP/wm8994",
+                "Drivers/BSP/rk043fn48h",
+                "FT8_library",
+                "Middlewares/src",
+                "Inc",
+                "Drivers/CMSIS/Include",
+                "Drivers/CMSIS/Device/ST/STM32F7xx/Include",
+                "Drivers/STM32F7xx_HAL_Driver/Inc",
+                "Utilities/Fonts"
+            ],
+            "defines": [
+                "DUSE_HAL_DRIVER",
+                "STM32F746xx",
+                "USE_STM32746G_DISCO",
+                "USE_IOEXPANDER"
+            ],
+            "compilerPath": "${env:USERPROFILE}/.platformio/packages/toolchain-gccarmnoneeabi/bin/arm-none-eabi-gcc",
+            "cStandard": "c11",
+            "cppStandard": "gnu++11",
+            "intelliSenseMode": "linux-gcc-arm"
+        }
+    ],
+    "version": 4
+}
