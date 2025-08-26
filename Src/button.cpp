@@ -952,7 +952,7 @@ void executeButton(uint16_t index)
 			strcpy(EditingText, Station_Call);
 			sButtonData[EditingWindow].text0 = EditingText;
 			EnableKeyboard();
-			for (int i = 40; i < 46; i++)
+			for (int i = EditCall; i < EditingWindow; i++)
 				sButtonData[i].Active = 0;
 			sButtonData[EditCall].Active = 1;
 		}
