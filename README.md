@@ -20,7 +20,7 @@
 ### - BluQRP: https://groups.io/g/BluQRP
 ### - uSDX Users Group: https://groups.io/g/ucx
 ###
-## Version 2.1.0
+## Version 2.0.1
 ### New in this version the device time can be synchonised to the Internet and reception reports uploaded to the PskReporter at https://www.pskreporter.info/
 ### This requires an external ESP32 module
 ### Please see https://github.com/g8kig/DX-FT8-TimeSync_PSKReporter for more information about constructing and programming the simple module that plugs into the transceiver.
