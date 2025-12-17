@@ -62,8 +62,8 @@ void start_codec(void)
 	uint32_t rc = wm8994_Reset(AUDIO_I2C_ADDRESS);
 	HAL_Delay(100);
 	rc = wm8994_Init(AUDIO_I2C_ADDRESS,
-					 INPUT_DEVICE_INPUT_LINE_1 | OUTPUT_DEVICE_BOTH, 70,
-					 Sample_Frequency / 2);
+				 INPUT_DEVICE_INPUT_LINE_1 | OUTPUT_DEVICE_BOTH, 70,
+				 Sample_Frequency / 2);
 	(void)rc;
 	HAL_Delay(100);
 }
@@ -117,19 +117,26 @@ void I2S2_RX_ProcessBuffer(uint16_t offset)
 {
 	static long NCO_phz = 0;
 
+	// Process input buffer and apply NCO mixing
 	for (int i = 0; i < BUFFERSIZE / 4; i++)
 	{
 		NCO_phz += NCOphzinc;
-		float temp = (q15_t)Sine_table[(NCO_phz >> 4) & 0xFFF] * RMSConstant;
+		int sine_index = (NCO_phz >> 4) & 0xFFF;
+		int cosine_index = (sine_index + 0x400) & 0xFFF;
+
+		float temp1 = (q15_t)Sine_table[sine_index] * RMSConstant;
+		float temp2 = (q15_t)Sine_table[cosine_index] * RMSConstant;
+
 		int index = i * 2 + offset;
-		FIR_I_In[i] = (q15_t)(temp * in_buff[index]);
-		FIR_Q_In[i] = (q15_t)(temp * in_buff[index + 1]);
+		FIR_I_In[i] = (q15_t)(temp1 * (float)in_buff[index]);
+		FIR_Q_In[i] = (q15_t)(temp2 * (float)in_buff[index]);
 	}
 
+	// Apply FIR filtering
 	Process_FIR_I_32K();
 	Process_FIR_Q_32K();
 
-	// Decimation
+	// Process output and decimate for FT8
 	uint8_t decimator = 0;
 	uint16_t ft8_pos = frame_counter * 256;
 	for (int i = 0; i < BUFFERSIZE / 4; i++)
@@ -148,6 +155,7 @@ void I2S2_RX_ProcessBuffer(uint16_t offset)
 		out_buff[index + 1] = LSB_Out[i];
 	}
 
+	// Trigger FT8 processing when buffer is full
 	if (++frame_counter == 4)
 	{
 		process_FT8_FFT();
