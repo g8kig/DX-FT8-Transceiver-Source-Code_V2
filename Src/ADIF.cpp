@@ -55,7 +55,8 @@ void write_ADIF_Log(void)
 	if (Logging_State)
 	{
 		static char log_line[300];
-		const char *freq = sBand_Data[BandIndex].display;
+		char freq[10];
+		sprintf(freq, "%u.%.3u", sBand_Data[BandIndex].Frequency/1000, sBand_Data[BandIndex].Frequency%1000);
 
 		int offset = sprintf(log_line, "<call:%1u>%s ", num_chars(Target_Call), trim_front(Target_Call));
 		int target_locator_len = num_chars(Target_Locator);
