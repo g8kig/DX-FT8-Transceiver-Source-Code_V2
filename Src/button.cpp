@@ -1326,6 +1326,9 @@ void setup_Cal_Display(void)
 		drawButton(button);
 	}
 
+	set_button_text(LoggingOnOff, Logging_State ? Logging_On : Logging_Off);
+	drawButton(LoggingOnOff);
+
 	show_wide(290, 55, start_freq);
 
 	requestTimeSync();
