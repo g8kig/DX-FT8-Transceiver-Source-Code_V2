@@ -71,6 +71,7 @@ typedef struct
     int retry_limit;
     bool logged; /* true => QSO logged */
 } ctx_t;
+
 // For logging ctx in RxTxLog
 static const char *queue_log_format =
     "Q s:%1ut:%1ur:%1u:%-13.13s:%-6.6s:%+3d:%+3d:%1u:%1u:%1u";
@@ -90,7 +91,7 @@ static ctx_t *append();
 static bool generate_response(ctx_t *ctx, const Decode *msg, bool override);
 // Ensure the queue is sorted and IDLE entries are popped
 static void sort_and_clean();
-static void write_worked_qso();
+static void write_worked_qso(ctx_t *ctx);
 /******************************************************/
 
 /* ====================================================
@@ -146,6 +147,7 @@ void autoseq_on_touch(const Decode *msg)
         sort_and_clean();
         return;
     }
+
     // Treat it as calling CQ
     strncpy(ctx->dxcall, msg->call_from, sizeof(ctx->dxcall) - 1);
     if (msg->sequence == Seq_Locator)
@@ -230,6 +232,21 @@ void autoseq_get_qso_states(char lines[][MAX_LINE_LEN])
     }
 }
 
+/* Helper function to handle common retry logic */
+static void handle_retry_state(ctx_t *ctx, tx_msg_t tx_msg)
+{
+    if (ctx->retry_counter < ctx->retry_limit)
+    {
+        ctx->next_tx = tx_msg;
+        ctx->retry_counter++;
+    }
+    else
+    {
+        ctx->state = AS_IDLE;
+        ctx->next_tx = TX_UNDEF;
+    }
+}
+
 /* === Slot timer / time‑out manager === */
 void autoseq_tick(void)
 {
@@ -237,56 +254,21 @@ void autoseq_tick(void)
     {
         return;
     }
+
     ctx_t *ctx = &ctx_queue[0];
     switch (ctx->state)
     {
     case AS_REPLYING:
-        if (ctx->retry_counter < ctx->retry_limit)
-        {
-            ctx->next_tx = TX1;
-            ctx->retry_counter++;
-        }
-        else
-        {
-            ctx->state = AS_IDLE;
-            ctx->next_tx = TX_UNDEF;
-        }
+        handle_retry_state(ctx, TX1);
         break;
     case AS_REPORT:
-        if (ctx->retry_counter < ctx->retry_limit)
-        {
-            ctx->next_tx = TX2;
-            ctx->retry_counter++;
-        }
-        else
-        {
-            ctx->state = AS_IDLE;
-            ctx->next_tx = TX_UNDEF;
-        }
+        handle_retry_state(ctx, TX2);
         break;
     case AS_ROGER_REPORT:
-        if (ctx->retry_counter < ctx->retry_limit)
-        {
-            ctx->next_tx = TX3;
-            ctx->retry_counter++;
-        }
-        else
-        {
-            ctx->state = AS_IDLE;
-            ctx->next_tx = TX_UNDEF;
-        }
+        handle_retry_state(ctx, TX3);
         break;
     case AS_ROGERS:
-        if (ctx->retry_counter < ctx->retry_limit)
-        {
-            ctx->next_tx = TX4;
-            ctx->retry_counter++;
-        }
-        else
-        {
-            ctx->state = AS_IDLE;
-            ctx->next_tx = TX_UNDEF;
-        }
+        handle_retry_state(ctx, TX4);
         break;
     case AS_CALLING: // CQ iscontrolled by Beacon_On, so it's only once
     case AS_SIGNOFF:
@@ -346,6 +328,16 @@ static void set_state(ctx_t *ctx, autoseq_state_t s, tx_msg_t first_tx, int limi
     ctx->retry_limit = limit;
 }
 
+static void log_qso_if_needed(ctx_t *ctx)
+{
+    if (!ctx->logged)
+    {
+        write_ADIF_Log();
+        write_worked_qso(ctx);
+        ctx->logged = true;
+    }
+}
+
 static void format_tx_text(tx_msg_t id, char out[MAX_MSG_LEN])
 {
     assert(out);
@@ -364,31 +356,21 @@ static void format_tx_text(tx_msg_t id, char out[MAX_MSG_LEN])
     switch (id)
     {
     case TX1:
-        snprintf(out, MAX_MSG_LEN, "%s %s %s", Target_Call, Station_Call, Station_Locator);
+        snprintf(out, MAX_MSG_LEN, "%s %s %s", ctx->dxcall, Station_Call, Station_Locator);
         break;
     case TX2:
-        snprintf(out, MAX_MSG_LEN, "%s %s %+d", Target_Call, Station_Call, Target_RSL);
+        snprintf(out, MAX_MSG_LEN, "%s %s %+d", ctx->dxcall, Station_Call, ctx->snr_tx);
         break;
     case TX3:
-        snprintf(out, MAX_MSG_LEN, "%s %s R%+d", Target_Call, Station_Call, Target_RSL);
+        snprintf(out, MAX_MSG_LEN, "%s %s R%+d", ctx->dxcall, Station_Call, ctx->snr_tx);
         break;
     case TX4:
-        snprintf(out, MAX_MSG_LEN, "%s %s RR73", Target_Call, Station_Call);
-        if (!ctx->logged)
-        {
-            write_ADIF_Log();
-            write_worked_qso();
-            ctx->logged = true;
-        }
+        snprintf(out, MAX_MSG_LEN, "%s %s RR73", ctx->dxcall, Station_Call);
+        log_qso_if_needed(ctx);
         break;
     case TX5:
-        snprintf(out, MAX_MSG_LEN, "%s %s 73", Target_Call, Station_Call);
-        if (!ctx->logged)
-        {
-            write_ADIF_Log();
-            write_worked_qso();
-            ctx->logged = true;
-        }
+        snprintf(out, MAX_MSG_LEN, "%s %s 73", ctx->dxcall, Station_Call);
+        log_qso_if_needed(ctx);
         break;
     case TX6:
         if (!free_text)
@@ -443,11 +425,7 @@ static void parse_rcvd_msg(ctx_t *ctx, const Decode *msg)
         {
             ctx->rcvd_msg_type = TX5;
         }
-        else if (strcmp(msg->locator, "RR73") == 0)
-        {
-            ctx->rcvd_msg_type = TX4;
-        }
-        else if (strcmp(msg->locator, "RRR") == 0)
+        else if ((strcmp(msg->locator, "RR73") == 0) || (strcmp(msg->locator, "RRR") == 0))
         {
             ctx->rcvd_msg_type = TX4;
         }
@@ -684,7 +662,7 @@ static void sort_and_clean()
     }
 }
 
-static void write_worked_qso()
+static void write_worked_qso(ctx_t *ctx)
 {
     static const char band_strs[NumBands][4] = {
         "40", "30", "20", "17", "15", "12", "10"};
